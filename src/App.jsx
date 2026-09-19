@@ -3,27 +3,33 @@ import {
   Routes,
   Route,
   Link,
+  Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import ManageMenu from "./ManageMenu";
+import ManageReservations from "./ManageReservations";
+import ManageOrders from "./ManageOrders";
+import AdminLogin from "./AdminLogin";
+import ManageReviews from "./ManageReviews";
+import AdminDashboard from "./AdminDashboard";
 
 /* =========================================================
    NAVBAR
 ========================================================= */
 
 function Navbar({ cartCount }) {
-
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const closeMenu = () => {
+  function closeMenu() {
     setMenuOpen(false);
-  };
+  }
 
   return (
     <nav className="navbar">
-
       <Link
         to="/"
         className="logo"
@@ -31,7 +37,6 @@ function Navbar({ cartCount }) {
       >
         TRATTORIA
       </Link>
-
 
       <button
         className="hamburger"
@@ -43,7 +48,6 @@ function Navbar({ cartCount }) {
         <span></span>
       </button>
 
-
       <div
         className={
           menuOpen
@@ -51,7 +55,6 @@ function Navbar({ cartCount }) {
             : "nav-links"
         }
       >
-
         <Link to="/" onClick={closeMenu}>
           Home
         </Link>
@@ -76,21 +79,25 @@ function Navbar({ cartCount }) {
           Contact
         </Link>
 
-
-        <Link
-          to="/checkout"
+               <Link
+          to={
+            cartCount === 0 &&
+            localStorage.getItem("trattoria_active_order_id")
+              ? "/order-placed"
+              : "/checkout"
+          }
           className="cart-nav-btn"
           onClick={closeMenu}
         >
-          🛒 Cart
+          {cartCount === 0 &&
+          localStorage.getItem("trattoria_active_order_id")
+            ? "📦 My Order"
+            : "🛒 Cart"}
 
           {cartCount > 0 && (
-            <span>
-              {cartCount}
-            </span>
+            <span>{cartCount}</span>
           )}
         </Link>
-
 
         <Link
           to="/reservation"
@@ -99,27 +106,20 @@ function Navbar({ cartCount }) {
         >
           Reserve Table
         </Link>
-
       </div>
-
     </nav>
   );
 }
-
 
 /* =========================================================
    HOME
 ========================================================= */
 
 function Home() {
-
   return (
     <main>
-
       <section className="hero">
-
         <div className="hero-content">
-
           <p>
             AUTHENTIC ITALIAN CUISINE
           </p>
@@ -127,7 +127,6 @@ function Home() {
           <h1>
             Authentic Taste,
             <br />
-
             <span>
               Crafted With Passion
             </span>
@@ -139,9 +138,7 @@ function Home() {
             unforgettable moments.
           </p>
 
-
           <div className="hero-buttons">
-
             <Link
               to="/menu"
               className="primary-btn"
@@ -149,23 +146,17 @@ function Home() {
               Explore Menu
             </Link>
 
-
             <Link
               to="/reservation"
               className="secondary-btn"
             >
               Reserve a Table
             </Link>
-
           </div>
-
         </div>
-
       </section>
 
-
       <section className="home-intro">
-
         <p>
           WELCOME TO TRATTORIA
         </p>
@@ -182,30 +173,24 @@ function Home() {
           experience.
         </p>
 
-
         <Link
           to="/about"
           className="primary-btn"
         >
           Discover Our Story
         </Link>
-
       </section>
-
     </main>
   );
 }
-
 
 /* =========================================================
    ABOUT
 ========================================================= */
 
 function About() {
-
   return (
     <main className="page">
-
       <p className="small-title">
         OUR STORY
       </p>
@@ -214,21 +199,16 @@ function About() {
         About Trattoria
       </h1>
 
-
       <div className="about-layout">
-
         <img
           src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?auto=format&fit=crop&w=1000&q=85"
           alt="Beautiful Italian restaurant"
         />
 
-
         <div>
-
           <h2>
             Where every dish tells a story.
           </h2>
-
 
           <p>
             Trattoria was created from a love
@@ -237,13 +217,11 @@ function About() {
             together and create beautiful memories.
           </p>
 
-
           <p>
             Our chefs prepare every dish with
             fresh ingredients, traditional
             techniques and a modern touch.
           </p>
-
 
           <Link
             to="/menu"
@@ -251,211 +229,65 @@ function About() {
           >
             Explore Our Menu
           </Link>
-
         </div>
-
       </div>
-
     </main>
   );
 }
-
 
 /* =========================================================
    MENU
 ========================================================= */
 
 function Menu({ cart, setCart }) {
+  const [activeCategory, setActiveCategory] =
+    useState("All");
 
-  const [
-    activeCategory,
-    setActiveCategory
-  ] = useState("All");
+  const [dishes, setDishes] =
+    useState([]);
 
+  const [loading, setLoading] =
+    useState(true);
 
-  /* =======================================================
-     DISHES
-  ======================================================= */
+  const [error, setError] =
+    useState("");
 
-  const dishes = [
+  useEffect(() => {
+    async function fetchDishes() {
+      try {
+        setLoading(true);
+        setError("");
 
-    {
-      name: "Margherita Pizza",
-      category: "Pizza",
-      description:
-        "Tomato, mozzarella, fresh basil and extra virgin olive oil.",
-      price: 15,
-      image:
-        "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=900&q=90",
-    },
+        const response = await fetch(
+          "https://trattoria-backend-production.up.railway.app/api/dishes"
+        );
 
+        if (!response.ok) {
+          throw new Error(
+            "Failed to load dishes"
+          );
+        }
 
-    {
-      name: "Pepperoni Pizza",
-      category: "Pizza",
-      description:
-        "Mozzarella, tomato sauce and spicy Italian pepperoni.",
-      price: 17,
-      image:
-        "https://images.unsplash.com/photo-1628840042765-356cda07504e?auto=format&fit=crop&w=900&q=90",
-    },
+        const data =
+          await response.json();
 
+        setDishes(data);
+      } catch (error) {
+        console.error(
+          "Error fetching dishes:",
+          error
+        );
 
-    {
-      name: "Classic Trattoria Burger",
-      category: "Burgers",
-      description:
-        "Premium beef, cheddar, lettuce, tomato and house sauce.",
-      price: 16,
-      image:
-        "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=90",
-    },
+        setError(
+          "Unable to load menu. Please make sure the backend server is running."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
 
-
-    {
-      name: "Double Cheese Burger",
-      category: "Burgers",
-      description:
-        "Two juicy beef patties, melted cheddar and special sauce.",
-      price: 19,
-      image:
-        "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Creamy Carbonara",
-      category: "Pasta",
-      description:
-        "Spaghetti, parmesan, egg yolk and crispy pancetta.",
-      price: 18,
-      image:
-        "https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Truffle Pasta",
-      category: "Pasta",
-      description:
-        "Fresh homemade pasta with creamy truffle sauce.",
-      price: 21,
-      image:
-        "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Classic Tiramisu",
-      category: "Sweets",
-      description:
-        "Mascarpone, espresso, cocoa and Italian ladyfingers.",
-      price: 8,
-      image:
-        "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Chocolate Cake",
-      category: "Sweets",
-      description:
-        "Rich chocolate cake with creamy chocolate frosting.",
-      price: 10,
-      image:
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Vanilla Gelato",
-      category: "Ice Cream",
-      description:
-        "Smooth classic Italian vanilla gelato.",
-      price: 6,
-      image:
-        "https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Pistachio Gelato",
-      category: "Ice Cream",
-      description:
-        "Creamy Sicilian pistachio gelato.",
-      price: 7,
-      image:
-        "https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Bruschetta",
-      category: "Starters",
-      description:
-        "Toasted Italian bread, tomatoes, basil and olive oil.",
-      price: 9,
-      image:
-        "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Garlic Bread",
-      category: "Starters",
-      description:
-        "Crispy Italian bread with garlic butter and herbs.",
-      price: 7,
-      image:
-        "https://www.foodandwine.com/thmb/pxx49mdooRZWdYRsBFzygKIU4AE=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/parmesan-garlic-bread-FT-RECIPE0825-2c5ceae59ad34210886c4576e89617cd.jpg",
-    },
-
-
-    {
-      name: "Chicken Parmesan",
-      category: "Main Course",
-      description:
-        "Crispy chicken, tomato sauce, mozzarella and herbs.",
-      price: 19,
-      image:
-        "https://images.unsplash.com/photo-1632778149955-e80f8ceca2e8?auto=format&fit=crop&w=900&q=90",
-    },
-
-
-    {
-      name: "Italian Beef Steak",
-      category: "Main Course",
-      description:
-        "Tender grilled steak with rosemary and roasted potatoes.",
-      price: 29,
-      image:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqGR5hEbe6-xyp1v6beN5nbk3VBixcIrZhPBlxfQDqdVeYzlb0Mz1biQtb&s=10",
-    },
-
-
-    {
-      name: "Fresh Lemonade",
-      category: "Drinks",
-      description:
-        "Fresh lemon, mint and ice.",
-      price: 6,
-      image:
-        "https://thumbs.dreamstime.com/b/cold-water-lemon-mint-leaf-fresh-lemonade-lime-slice-ice-cubes-nonalcoholic-beverage-cocktail-glass-black-95092476.jpg",
-    },
-
-
-    {
-      name: "Cappuccino",
-      category: "Drinks",
-      description:
-        "Espresso with steamed milk and creamy Italian foam.",
-      price: 5,
-      image:
-        "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=900&q=90",
-    },
-
-  ];
-
+    fetchDishes();
+  }, []);
 
   const categories = [
     "All",
@@ -469,109 +301,103 @@ function Menu({ cart, setCart }) {
     "Drinks",
   ];
 
-
   const filteredDishes =
     activeCategory === "All"
       ? dishes
       : dishes.filter(
-          (dish) =>
-            dish.category === activeCategory
+          function (dish) {
+            return (
+              dish.category ===
+              activeCategory
+            );
+          }
         );
 
-
-  /* =======================================================
-     ADD TO CART
-  ======================================================= */
-
-  const addToCart = (dish) => {
-
+  function addToCart(dish) {
     const existingItem =
-      cart.find(
-        (item) =>
-          item.name === dish.name
-      );
-
+      cart.find(function (item) {
+        return item._id === dish._id;
+      });
 
     if (existingItem) {
+      if (existingItem.quantity >= 15) {
+        window.alert(
+          "You can order a maximum of 15 of the same item."
+        );
+        return;
+      }
 
       setCart(
-        cart.map(
-          (item) =>
-            item.name === dish.name
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity + 1,
-                }
-              : item
-        )
+        cart.map(function (item) {
+          if (item._id === dish._id) {
+            return {
+              ...item,
+              quantity:
+                item.quantity + 1,
+            };
+          }
+
+          return item;
+        })
       );
 
-    } else {
-
-      setCart([
-        ...cart,
-        {
-          ...dish,
-          quantity: 1,
-        },
-      ]);
-
+      return;
     }
 
-  };
+    if (cart.length >= 10) {
+      window.alert(
+        "You can order a maximum of 10 different items in one order."
+      );
+      return;
+    }
 
+    setCart([
+      ...cart,
+      {
+        ...dish,
+        quantity: 1,
+      },
+    ]);
+  }
 
   const cartCount =
-    cart.reduce(
-      (total, item) =>
-        total + item.quantity,
-      0
-    );
-
+    cart.reduce(function (
+      total,
+      item
+    ) {
+      return (
+        total + item.quantity
+      );
+    }, 0);
 
   return (
     <main className="page menu-page">
-
       <p className="small-title">
         OUR MENU
       </p>
 
-
       <h1>
         Italian Favorites
       </h1>
-
 
       <p className="menu-subtitle">
         Discover authentic Italian flavors,
         freshly prepared with passion.
       </p>
 
-
-      {/* CART */}
-
       <Link
         to="/checkout"
         className="cart-counter"
       >
-
         🛒 Cart
-
-        <span>
-          {cartCount}
-        </span>
-
+        <span>{cartCount}</span>
       </Link>
 
-
-      {/* CATEGORIES */}
-
       <div className="menu-categories">
-
-        {categories.map(
-          (category) => (
-
+        {categories.map(function (
+          category
+        ) {
+          return (
             <button
               key={category}
               className={
@@ -579,115 +405,138 @@ function Menu({ cart, setCart }) {
                   ? "category-btn active"
                   : "category-btn"
               }
-              onClick={() =>
+              onClick={function () {
                 setActiveCategory(
                   category
-                )
-              }
+                );
+              }}
             >
               {category}
             </button>
-
-          )
-        )}
-
+          );
+        })}
       </div>
 
+      {loading && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px 20px",
+          }}
+        >
+          <h2>
+            Loading menu...
+          </h2>
 
-      {/* DISHES */}
+          <p>
+            Please wait while we load our dishes.
+          </p>
+        </div>
+      )}
 
-      <div className="menu-grid">
+      {!loading && error && (
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px 20px",
+          }}
+        >
+          <h2>
+            Unable to Load Menu
+          </h2>
 
-        {filteredDishes.map(
-          (dish) => (
+          <p>{error}</p>
+        </div>
+      )}
 
-            <article
-              className="dish-card"
-              key={dish.name}
-            >
+      {!loading &&
+        !error &&
+        filteredDishes.length === 0 && (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "60px 20px",
+            }}
+          >
+            <h2>
+              No dishes found
+            </h2>
 
-              <div className="dish-image">
+            <p>
+              There are no dishes in this category yet.
+            </p>
+          </div>
+        )}
 
-                <img
-                  src={dish.image}
-                  alt={dish.name}
-                />
-
-                <span>
-                  {dish.category}
-                </span>
-
-              </div>
-
-
-              <div className="dish-info">
-
-                <div className="dish-heading">
-
-                  <h2>
-                    {dish.name}
-                  </h2>
-
-                  <strong>
-                    ${dish.price}
-                  </strong>
-
-                </div>
-
-
-                <div className="dish-rating">
-
-                  ★★★★★
-
-                  <small>
-                    4.9
-                  </small>
-
-                </div>
-
-
-                <p>
-                  {dish.description}
-                </p>
-
-
-                <button
-                  className="dish-btn"
-                  onClick={() =>
-                    addToCart(dish)
-                  }
+      {!loading &&
+        !error &&
+        filteredDishes.length > 0 && (
+          <div className="menu-grid">
+            {filteredDishes.map(function (
+              dish
+            ) {
+              return (
+                <article
+                  className="dish-card"
+                  key={dish._id}
                 >
-                  🛒 Add to Cart
-                </button>
+                  <div className="dish-image">
+                    <img
+                      src={dish.image}
+                      alt={dish.name}
+                    />
 
-              </div>
+                    <span>
+                      {dish.category}
+                    </span>
+                  </div>
 
-            </article>
+                  <div className="dish-info">
+                    <div className="dish-heading">
+                      <h2>
+                        {dish.name}
+                      </h2>
 
-          )
+                      <strong>
+                        ${dish.price}
+                      </strong>
+                    </div>
+
+                    <div className="dish-rating">
+                      ★★★★★
+                      <small>4.9</small>
+                    </div>
+
+                    <p>
+                      {dish.description}
+                    </p>
+
+                    <button
+                      className="dish-btn"
+                      onClick={function () {
+                        addToCart(dish);
+                      }}
+                    >
+                      🛒 Add to Cart
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         )}
-
-      </div>
-
-
-      {/* CART NOTIFICATION */}
 
       {cart.length > 0 && (
-
         <div className="cart-notification">
-
           🛒{" "}
-
           <strong>
             {cartCount}
           </strong>{" "}
-
           item
           {cartCount !== 1
             ? "s"
             : ""}{" "}
           added
-
 
           <Link
             to="/checkout"
@@ -695,1163 +544,1837 @@ function Menu({ cart, setCart }) {
           >
             View Cart
           </Link>
-
         </div>
-
       )}
-
     </main>
   );
 }
 
-
+/* =========================================================
+   CHECKOUT
+========================================================= */
 /* =========================================================
    CHECKOUT
 ========================================================= */
 
 function Checkout({ cart, setCart }) {
-
   const navigate = useNavigate();
 
-
-  const [name, setName] =
-    useState("");
-
-  const [phone, setPhone] =
-    useState("");
-
-  const [address, setAddress] =
-    useState("");
-
-  const [city, setCity] =
-    useState("");
-
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [payment, setPayment] =
     useState("Cash on Delivery");
 
+  const [loading, setLoading] = useState(false);
 
-  /* =======================================================
-     QUANTITY
-  ======================================================= */
+  const [error, setError] = useState("");
+  const [errorField, setErrorField] = useState("");
 
-  const increaseQuantity = (itemName) => {
+  const namePattern =
+    /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
+
+  const emailPattern =
+    /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+  const phonePattern =
+    /^03[0-9]{9}$/;
+
+  const allowedCities = [
+    "Kaghan Colony",
+    "Jinnahabad",
+    "Kehal",
+    "Supply",
+    "Mandian",
+    "Jhangi",
+  ];
+
+  const allowedPayments = [
+    "Cash on Delivery",
+    "Card Payment",
+    "PayPal",
+  ];
+
+  function isValidName(value) {
+    const cleanValue = value.trim();
+
+    return (
+      cleanValue.length >= 2 &&
+      cleanValue.length <= 50 &&
+      namePattern.test(cleanValue)
+    );
+  }
+
+  function isValidEmail(value) {
+    const cleanValue =
+      value.trim().toLowerCase();
+
+    return (
+      cleanValue.length >= 6 &&
+      cleanValue.length <= 100 &&
+      emailPattern.test(cleanValue) &&
+      !cleanValue.includes("..")
+    );
+  }
+
+  /* Handles: 03001234567, 0300-1234567, 0300 1234567,
+     +92 300 1234567, +923001234567, 92 300 1234567,
+     923001234567, 3001234567 */
+  function normalizePhone(value) {
+    let normalized =
+      value.trim().replace(/[\s-]/g, "");
+
+    if (normalized.startsWith("+92")) {
+      normalized =
+        "0" + normalized.slice(3);
+    } else if (
+      normalized.startsWith("92") &&
+      normalized.length === 12
+    ) {
+      normalized =
+        "0" + normalized.slice(2);
+    } else if (
+      normalized.startsWith("3") &&
+      normalized.length === 10
+    ) {
+      normalized = "0" + normalized;
+    }
+
+    return normalized;
+  }
+
+  function isValidPhone(value) {
+    const normalized = normalizePhone(value);
+
+    if (!phonePattern.test(normalized)) {
+      return false;
+    }
+
+    const phoneDigits = normalized.slice(1);
+
+    const allSame = phoneDigits
+      .split("")
+      .every(function (digit) {
+        return digit === phoneDigits[0];
+      });
+
+    return !allSame;
+  }
+
+  function isValidCity(value) {
+    return allowedCities.includes(value.trim());
+  }
+
+  function isValidAddress(value) {
+    const cleanValue = value.trim();
+
+    if (
+      cleanValue.length < 5 ||
+      cleanValue.length > 150
+    ) {
+      return false;
+    }
+
+    return /[A-Za-z0-9]/.test(cleanValue);
+  }
+
+  function isValidPayment(value) {
+    return allowedPayments.includes(value);
+  }
+  /* Only clear an error — never raise one while typing.
+     Errors only appear when user clicks Confirm Your Order. */
+  function checkField(field, value) {
+    if (errorField !== field) {
+      return;
+    }
+
+    let valid = true;
+
+    if (field === "name") {
+      valid = isValidName(value);
+    }
+
+    if (field === "email") {
+      valid = isValidEmail(value);
+    }
+
+    if (field === "phone") {
+      valid = isValidPhone(value);
+    }
+
+    if (field === "city") {
+      valid = isValidCity(value);
+    }
+
+    if (field === "address") {
+      valid = isValidAddress(value);
+    }
+
+    if (field === "payment") {
+      valid = isValidPayment(value);
+    }
+
+    if (valid) {
+      setError("");
+      setErrorField("");
+    }
+  }
+
+  function increaseQuantity(itemId) {
+    const selectedItem = cart.find(function (item) {
+      return item._id === itemId;
+    });
+
+    if (selectedItem && selectedItem.quantity >= 15) {
+      setError(
+        "Maximum 15 of the same item can be ordered."
+      );
+      setErrorField("cart");
+      return;
+    }
+
+    setError("");
+    setErrorField("");
 
     setCart(
-      cart.map(
-        (item) =>
-          item.name === itemName
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + 1,
-              }
-            : item
-      )
+      cart.map(function (item) {
+        if (item._id === itemId) {
+          return {
+            ...item,
+            quantity: item.quantity + 1,
+          };
+        }
+        return item;
+      })
     );
+  }
 
-  };
-
-
-  const decreaseQuantity = (itemName) => {
+  function decreaseQuantity(itemId) {
+    setError("");
+    setErrorField("");
 
     setCart(
       cart
-        .map(
-          (item) =>
-            item.name === itemName
-              ? {
-                  ...item,
-                  quantity:
-                    item.quantity - 1,
-                }
-              : item
-        )
-        .filter(
-          (item) =>
-            item.quantity > 0
-        )
+        .map(function (item) {
+          if (item._id === itemId) {
+            return {
+              ...item,
+              quantity: item.quantity - 1,
+            };
+          }
+          return item;
+        })
+        .filter(function (item) {
+          return item.quantity > 0;
+        })
     );
-
-  };
-
-
-  const removeItem = (itemName) => {
-
-    setCart(
-      cart.filter(
-        (item) =>
-          item.name !== itemName
-      )
-    );
-
-  };
-
-
-  /* =======================================================
-     PAYMENT
-  ======================================================= */
-
-  const subtotal =
-    cart.reduce(
-      (total, item) =>
-        total +
-        item.price *
-          item.quantity,
-      0
-    );
-
-
-  const deliveryFee =
-    cart.length > 0
-      ? 3
-      : 0;
-
-
-  const total =
-    subtotal + deliveryFee;
-
-
-  /* =======================================================
-     CONFIRM ORDER
-  ======================================================= */
-
-  const confirmOrder = (e) => {
-
-    e.preventDefault();
-
-
-    if (cart.length === 0) {
-
-      alert(
-        "Your cart is empty. Please add some delicious food first!"
-      );
-
-      return;
-
-    }
-
-
-    /* Generate simple order number */
-
-    const orderNumber =
-      "TR" +
-      Math.floor(
-        100000 +
-        Math.random() * 900000
-      );
-
-
-    /*
-      FIRST ALERT
-    */
-
-    alert(
-      `Order confirmed! 🎉\n\nThank you ${name}!\n\nTotal Payment: $${total.toFixed(
-        2
-      )}\n\nYour order will arrive in 30–40 minutes.\n\nOrder #${orderNumber}`
-    );
-
-
-    /*
-      CLEAR CART
-    */
-
-    setCart([]);
-
-
-    /*
-      CLEAR CUSTOMER INFORMATION
-    */
-
-    setName("");
-    setPhone("");
-    setAddress("");
-    setCity("");
-    setPayment("Cash on Delivery");
-
-
-    /*
-      AFTER ALERT:
-      GO TO ORDER PLACED PAGE
-    */
-
-    navigate("/order-placed", {
-      state: {
-        orderNumber: orderNumber,
-        customerName: name,
-        total: total,
-        city: city,
-        address: address,
-      },
-    });
-
-  };
-
-
-  /* =======================================================
-     EMPTY CART
-  ======================================================= */
-
-  if (cart.length === 0) {
-
-    return (
-
-      <main className="page checkout-page">
-
-        <p className="small-title">
-          YOUR ORDER
-        </p>
-
-
-        <h1>
-          Your Cart is Empty
-        </h1>
-
-
-        <div className="empty-cart">
-
-          <div className="empty-cart-icon">
-            🛒
-          </div>
-
-
-          <h2>
-            Nothing here yet
-          </h2>
-
-
-          <p>
-            Add your favorite Italian
-            dishes to start your order.
-          </p>
-
-
-          <Link
-            to="/menu"
-            className="primary-btn"
-          >
-            Browse Menu
-          </Link>
-
-        </div>
-
-      </main>
-
-    );
-
   }
 
+  function removeItem(itemId) {
+    setError("");
+    setErrorField("");
+
+    setCart(
+      cart.filter(function (item) {
+        return item._id !== itemId;
+      })
+    );
+  }
+
+  const cartCount = cart.reduce(function (total, item) {
+    return total + Number(item.quantity);
+  }, 0);
+
+  const subtotal = cart.reduce(function (total, item) {
+    return (
+      total +
+      Number(item.price) * Number(item.quantity)
+    );
+  }, 0);
+
+  const extraDeliveryUnits = Math.max(
+    0,
+    Math.ceil(Math.max(0, cartCount - 3) / 3)
+  );
+
+  const deliveryFee =
+    cart.length > 0 ? 3 + extraDeliveryUnits : 0;
+
+  const total = subtotal + deliveryFee;
+
+  async function confirmOrder(e) {
+    e.preventDefault();
+
+    setError("");
+    setErrorField("");
+
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+    const cleanAddress = address.trim();
+    const cleanCity = city.trim();
+
+    if (cart.length === 0) {
+      setError("Your cart is empty.");
+      setErrorField("cart");
+      return;
+    }
+
+    if (cart.length > 10) {
+      setError(
+        "You can order a maximum of 10 different items."
+      );
+      setErrorField("cart");
+      return;
+    }
+
+    if (cartCount < 1) {
+      setError("Your cart is empty.");
+      setErrorField("cart");
+      return;
+    }
+
+    for (let i = 0; i < cart.length; i++) {
+      const item = cart[i];
+      const itemQuantity = Number(item.quantity);
+      const itemPrice = Number(item.price);
+
+      if (
+        !item.name ||
+        !item.image ||
+        !Number.isInteger(itemQuantity) ||
+        itemQuantity < 1 ||
+        itemQuantity > 15 ||
+        !Number.isFinite(itemPrice) ||
+        itemPrice <= 0
+      ) {
+        setError(
+          "There is an issue with an item in your cart."
+        );
+        setErrorField("cart");
+        return;
+      }
+    }
+    if (!isValidName(cleanName)) {
+      setError("Please enter valid data.");
+      setErrorField("name");
+      return;
+    }
+    if (!isValidEmail(cleanEmail)) {
+      setError("Please enter valid data.");
+      setErrorField("email");
+      return;
+    }
+
+    const normalizedPhone = normalizePhone(cleanPhone);
+     if (!isValidPhone(cleanPhone)) {
+      setError("Please enter valid data.");
+      setErrorField("phone");
+      return;
+    }
+     if (!isValidCity(cleanCity)) {
+      setError("Please enter valid data.");
+      setErrorField("city");
+      return;
+    }
+
+       if (!isValidAddress(cleanAddress)) {
+      setError("Please enter valid data.");
+      setErrorField("address");
+      return;
+    }
+      if (!isValidPayment(payment)) {
+      setError("Please enter valid data.");
+      setErrorField("payment");
+      return;
+    }
+
+    if (!Number.isFinite(total) || total <= 0) {
+      setError("Your order total is invalid.");
+      setErrorField("cart");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const orderItems = cart.map(function (item) {
+        return {
+          name: item.name.trim(),
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          image: item.image,
+        };
+      });
+
+      const orderData = {
+        customerName: cleanName,
+        email: cleanEmail,
+        phone: normalizedPhone,
+        address: cleanAddress + ", " + cleanCity,
+        items: orderItems,
+        total: Number(total.toFixed(2)),
+      };
+
+      const response = await fetch(
+        "https://trattoria-backend-production.up.railway.app/api/orders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderData),
+        }
+      );
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        throw new Error("Order could not be saved");
+      }
+
+      const orderNumber =
+        data.orderNumber ||
+        (data._id
+          ? "TR" +
+            data._id
+              .toString()
+              .slice(-6)
+              .toUpperCase()
+          : "TR000000");
+
+      if (data._id) {
+        localStorage.setItem(
+          "trattoria_active_order_id",
+          data._id.toString()
+        );
+      }
+
+      localStorage.setItem(
+        "trattoria_order_number",
+        orderNumber
+      );
+
+      const customerName = cleanName;
+      const selectedCity = cleanCity;
+      const selectedAddress = cleanAddress;
+      const selectedPayment = payment;
+      const orderTime = new Date().getTime();
+
+      setCart([]);
+
+      setName("");
+      setEmail("");
+      setPhone("");
+      setAddress("");
+      setCity("");
+
+      setError("");
+      setErrorField("");
+
+      localStorage.setItem(
+        "trattoria_order_time",
+        orderTime.toString()
+      );
+
+      navigate("/order-placed", {
+        state: {
+          orderNumber: orderNumber,
+          customerName: customerName,
+          total: total,
+          city: selectedCity,
+          address: selectedAddress,
+          payment: selectedPayment,
+          orderTime: orderTime,
+        },
+      });
+
+    } catch (error) {
+      console.error("Order error:", error);
+
+      setError(
+        "Unable to save your order. Please check your connection and try again."
+      );
+      setErrorField("server");
+
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (cart.length === 0) {
+    return (
+      <main className="page checkout-page">
+        <p className="small-title">YOUR ORDER</p>
+
+        <h1>Your Cart is Empty</h1>
+
+        <div className="empty-cart">
+          <div className="empty-cart-icon">🛒</div>
+
+          <h2>Nothing here yet</h2>
+
+          <p>
+            Add your favorite Italian dishes
+            to start your order.
+          </p>
+
+          <Link to="/menu" className="primary-btn">
+            Browse Menu
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
-
     <main className="page checkout-page">
+      <p className="small-title">YOUR ORDER</p>
 
-      <p className="small-title">
-        YOUR ORDER
-      </p>
-
-
-      <h1>
-        Confirm Your Order
-      </h1>
-
+      <h1>Confirm Your Order</h1>
 
       <div className="checkout-layout">
-
-
-        {/* =================================================
-            ORDER ITEMS
-        ================================================= */}
-
         <section className="order-section">
+          <h2>Your Items</h2>
 
-          <h2>
-            Your Items
-          </h2>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#777",
+              marginBottom: "20px",
+            }}
+          >
+            Maximum 15 of each item and maximum
+            10 different items per order.
+          </p>
 
-
-          {cart.map(
-            (item) => (
-
-              <div
-                className="order-item"
-                key={item.name}
-              >
-
-                <img
-                  src={item.image}
-                  alt={item.name}
-                />
-
+          {cart.map(function (item) {
+            return (
+              <div className="order-item" key={item._id}>
+                <img src={item.image} alt={item.name} />
 
                 <div className="order-item-info">
+                  <h3>{item.name}</h3>
 
-                  <h3>
-                    {item.name}
-                  </h3>
-
-
-                  <p>
-                    ${item.price} each
-                  </p>
-
+                  <p>${item.price} each</p>
 
                   <div className="quantity-controls">
-
                     <button
                       type="button"
-                      onClick={() =>
-                        decreaseQuantity(
-                          item.name
-                        )
-                      }
+                      onClick={function () {
+                        decreaseQuantity(item._id);
+                      }}
                     >
                       −
                     </button>
 
-
-                    <span>
-                      {item.quantity}
-                    </span>
-
+                    <span>{item.quantity}</span>
 
                     <button
                       type="button"
-                      onClick={() =>
-                        increaseQuantity(
-                          item.name
-                        )
-                      }
+                      onClick={function () {
+                        increaseQuantity(item._id);
+                      }}
+                      disabled={item.quantity >= 15}
                     >
                       +
                     </button>
-
                   </div>
-
                 </div>
 
-
                 <div className="order-item-right">
-
                   <strong>
                     $
                     {(
-                      item.price *
-                      item.quantity
+                      Number(item.price) *
+                      Number(item.quantity)
                     ).toFixed(2)}
                   </strong>
-
 
                   <button
                     type="button"
                     className="remove-item"
-                    onClick={() =>
-                      removeItem(
-                        item.name
-                      )
-                    }
+                    onClick={function () {
+                      removeItem(item._id);
+                    }}
                   >
                     Remove
                   </button>
-
                 </div>
-
               </div>
-
-            )
-          )}
-
+            );
+          })}
         </section>
 
-
-        {/* =================================================
-            ORDER SUMMARY
-        ================================================= */}
-
         <aside className="checkout-summary">
-
-          <h2>
-            Order Summary
-          </h2>
-
+          <h2>Order Summary</h2>
 
           <div className="summary-row">
-
-            <span>
-              Subtotal
-            </span>
-
-            <strong>
-              ${subtotal.toFixed(2)}
-            </strong>
-
+            <span>Items</span>
+            <strong>{cartCount}</strong>
           </div>
-
 
           <div className="summary-row">
-
-            <span>
-              Delivery Fee
-            </span>
-
-            <strong>
-              ${deliveryFee.toFixed(2)}
-            </strong>
-
+            <span>Different Items</span>
+            <strong>{cart.length} / 10</strong>
           </div>
 
+          <div className="summary-row">
+            <span>Subtotal</span>
+            <strong>${subtotal.toFixed(2)}</strong>
+          </div>
+
+          <div className="summary-row">
+            <span>Delivery Fee</span>
+            <strong>${deliveryFee.toFixed(2)}</strong>
+          </div>
 
           <div className="summary-divider"></div>
 
-
           <div className="summary-total">
-
-            <span>
-              Total Payment
-            </span>
-
-            <strong>
-              ${total.toFixed(2)}
-            </strong>
-
+            <span>Total Payment</span>
+            <strong>${total.toFixed(2)}</strong>
           </div>
-
 
           <p className="delivery-note">
             🚚 Estimated delivery: 30–40 minutes
           </p>
-
         </aside>
-
       </div>
 
-
-      {/* =================================================
-          CUSTOMER DETAILS
-      ================================================= */}
-
       <section className="order-details">
-
-        <h2>
-          Confirm Your Details
-        </h2>
-
+        <h2>Confirm Your Details</h2>
 
         <form
           onSubmit={confirmOrder}
           className="order-form"
+          noValidate
         >
-
-
-          {/* NAME */}
+          {error && (
+            <p
+              style={{
+                gridColumn: "1 / -1",
+                color: "#b21f3a",
+                background: "#fff2f4",
+                border: "1px solid #f3c2cc",
+                padding: "12px 15px",
+                borderRadius: "10px",
+                fontWeight: "600",
+                margin: 0,
+              }}
+            >
+              ⚠ {error}
+            </p>
+          )}
 
           <div className="form-group">
-
-            <label>
-              Full Name
-            </label>
+            <label>Full Name</label>
 
             <input
               type="text"
               placeholder="Enter your full name"
               value={name}
-              onChange={(e) =>
-                setName(
-                  e.target.value
-                )
-              }
+              onChange={function (e) {
+                const value = e.target.value;
+                setName(value);
+                checkField("name", value);
+              }}
               required
             />
-
           </div>
 
+          <div className="form-group">
+            <label>Email Address</label>
 
-          {/* PHONE */}
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={function (e) {
+                const value = e.target.value;
+                setEmail(value);
+                checkField("email", value);
+              }}
+              required
+            />
+          </div>
 
           <div className="form-group">
-
-            <label>
-              Phone Number
-            </label>
+            <label>Phone Number</label>
 
             <input
               type="tel"
               placeholder="+92 300 1234567"
               value={phone}
-              onChange={(e) =>
-                setPhone(
-                  e.target.value
-                )
-              }
+              onChange={function (e) {
+                const value = e.target.value;
+                setPhone(value);
+                checkField("phone", value);
+              }}
               required
             />
 
+            <small>
+              Example: 03001234567 or +92 300 1234567
+            </small>
           </div>
 
+          <div className="form-group">
+            <label>Area</label>
 
-          {/* ADDRESS */}
+            <select
+              value={city}
+              onChange={function (e) {
+                const value = e.target.value;
+                setCity(value);
+                checkField("city", value);
+              }}
+              required
+            >
+              <option value="">Select your area</option>
+              <option value="Kaghan Colony">
+                Kaghan Colony
+              </option>
+              <option value="Jinnahabad">
+                Jinnahabad
+              </option>
+              <option value="Kehal">Kehal</option>
+              <option value="Supply">Supply</option>
+              <option value="Mandian">Mandian</option>
+              <option value="Jhangi">Jhangi</option>
+            </select>
+          </div>
 
           <div className="form-group full-width">
-
-            <label>
-              Delivery Address
-            </label>
+            <label>Delivery Address</label>
 
             <input
               type="text"
               placeholder="House number, street, area"
               value={address}
-              onChange={(e) =>
-                setAddress(
-                  e.target.value
-                )
-              }
+              onChange={function (e) {
+                const value = e.target.value;
+                setAddress(value);
+                checkField("address", value);
+              }}
               required
             />
 
+            <small>
+              Enter a complete delivery address.
+            </small>
           </div>
 
-
-          {/* CITY */}
-
           <div className="form-group">
-
-            <label>
-              area
-            </label>
-
-            <select
-              value={city}
-              onChange={(e) =>
-                setCity(
-                  e.target.value
-                )
-              }
-              required
-            >
-
-              <option value="">
-                Select your area
-              </option>
-
-              <option value="kaghan colony">
-                kaghan colony
-              </option>
-
-              <option value="jinahabad">
-                jinahabad
-              </option>
-
-              <option value="kehal">
-                kehal
-              </option>
-
-              <option value="supply">
-                supply
-              </option>
-
-              <option value="mandian">
-                mandian
-              </option>
-
-              <option value="mirpur">
-                jhangi
-              </option>
-
-            </select>
-
-          </div>
-
-
-          {/* PAYMENT */}
-
-          <div className="form-group">
-
-            <label>
-              Payment Method
-            </label>
+            <label>Payment Method</label>
 
             <select
               value={payment}
-              onChange={(e) =>
-                setPayment(
-                  e.target.value
-                )
-              }
+              onChange={function (e) {
+                const value = e.target.value;
+                setPayment(value);
+                checkField("payment", value);
+              }}
             >
-
               <option value="Cash on Delivery">
                 Cash on Delivery
               </option>
-
               <option value="Card Payment">
                 Card Payment
               </option>
-
-              <option value="PayPal">
-                PayPal
-              </option>
-
+              <option value="PayPal">PayPal</option>
             </select>
-
           </div>
-
-
-          {/* =================================================
-              FINAL CONFIRM BUTTON
-          ================================================= */}
 
           <button
             type="submit"
             className="confirm-order-btn"
+            disabled={loading}
           >
-
             <span>
-              Confirm Your Order
+              {loading
+                ? "Saving Order..."
+                : "Confirm Your Order"}
             </span>
 
-            <strong>
-              ${total.toFixed(2)}
-            </strong>
-
+            <strong>${total.toFixed(2)}</strong>
           </button>
-
         </form>
-
       </section>
-
     </main>
-
   );
 }
-
-
 /* =========================================================
    ORDER PLACED
 ========================================================= */
 
 function OrderPlaced() {
-
   const navigate = useNavigate();
+  const location = useLocation();
 
-
-  /*
-     Get order information from navigation
-  */
-
-  let orderData = null;
-
-  try {
-
-    const locationState =
-      window.history.state?.usr;
-
-    orderData = locationState;
-
-  } catch {
-    orderData = null;
-  }
-
-
-  /*
-     IMPORTANT:
-     React Router navigation state is normally
-     available through useLocation.
-  */
-
-  return (
-    <OrderPlacedContent
-      orderData={orderData}
-      navigate={navigate}
-    />
-  );
-}
-
-
-/* =========================================================
-   ORDER PLACED CONTENT
-========================================================= */
-
-function OrderPlacedContent({
-  orderData,
-  navigate
-}) {
+  const orderData =
+    location.state || {};
 
   const [showInfo, setShowInfo] =
     useState(true);
 
+  const [order, setOrder] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
+
+    const [review, setReview] =
+    useState("");
+
+  const [rating, setRating] =
+    useState(5);
+    
+  const [reviewError, setReviewError] =
+    useState("");
+
+  const [reviewSubmitted, setReviewSubmitted] =
+    useState(false);
+    
+
+  /* -----------------------------------------
+     GET REAL ORDER FROM MONGODB
+  ----------------------------------------- */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchOrder() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const savedOrderId =
+          localStorage.getItem(
+            "trattoria_active_order_id"
+          );
+
+        if (!savedOrderId) {
+          if (!cancelled) {
+            setLoading(false);
+            setError(
+              "Order information could not be found."
+            );
+          }
+
+          return;
+        }
+
+        const response =
+          await fetch(
+            "https://trattoria-backend-production.up.railway.app/api/orders/" +
+              savedOrderId
+          );
+
+        let data = {};
+
+        try {
+          data =
+            await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.message ||
+              "Failed to load order"
+          );
+        }
+
+        if (!cancelled) {
+          setOrder(data);
+        }
+      } catch (error) {
+        console.error(
+          "Order fetch error:",
+          error
+        );
+
+        if (!cancelled) {
+          setError(
+            "Unable to load your order. Please make sure the backend server is running."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchOrder();
+
+    return function () {
+      cancelled = true;
+    };
+  }, []);
+
+  /* -----------------------------------------
+     CHECK ORDER STATUS
+  ----------------------------------------- */
+
+  useEffect(() => {
+    const savedOrderId =
+      localStorage.getItem(
+        "trattoria_active_order_id"
+      );
+
+    if (!savedOrderId) {
+      return;
+    }
+
+    async function refreshOrder() {
+      try {
+        const response =
+          await fetch(
+            "https://trattoria-backend-production.up.railway.app/api/orders/" +
+              savedOrderId
+          );
+
+        if (!response.ok) {
+          return;
+        }
+
+         const data =
+          await response.json();
+
+        setOrder(data);
+
+        /* Once delivered or cancelled, clear the active
+           order so the navbar stops showing "My Order". */
+           if (data.status === "Cancelled") {
+          localStorage.removeItem(
+            "trattoria_active_order_id"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Order status refresh error:",
+          error
+        );
+      }
+    }
+
+    const timer =
+      setInterval(
+        refreshOrder,
+        10000
+      );
+
+    return function () {
+      clearInterval(timer);
+    };
+  }, []);
+
+  /* -----------------------------------------
+     REAL ORDER STATUS
+  ----------------------------------------- */
+
+  const orderStatus =
+    order?.status ||
+    "Pending";
+
+  const canReview =
+    orderStatus ===
+    "Delivered";
+
+  const isCancelled =
+    orderStatus ===
+    "Cancelled";
+
+  /* -----------------------------------------
+     REVIEW
+  ----------------------------------------- */
+  async function submitReview(e) {
+    e.preventDefault();
+
+    setReviewError("");
+
+    const cleanReview = review.trim();
+
+    if (cleanReview.length < 10) {
+      setReviewError(
+        "Review must be at least 10 characters."
+      );
+      return;
+    }
+
+    if (cleanReview.length > 500) {
+      setReviewError(
+        "Review cannot exceed 500 characters."
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "https://trattoria-backend-production.up.railway.app/api/reviews",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name:
+              order?.customerName ||
+              orderData.customerName ||
+              "Customer",
+            rating: Number(rating),
+            comment: cleanReview,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to submit review");
+      }
+
+      setReviewSubmitted(true);
+      setReview("");
+      setReviewError("");
+    } catch (error) {
+      console.error("Review submission error:", error);
+
+      setReviewError(
+        "Unable to submit review. Please try again."
+      );
+    }
+  }
+  /* -----------------------------------------
+     ORDER NUMBER
+  ----------------------------------------- */
+
+  const orderNumber =
+    order?.orderNumber ||
+    orderData.orderNumber ||
+    localStorage.getItem(
+      "trattoria_order_number"
+    ) ||
+    "TR000000";
+
+  /* -----------------------------------------
+     CUSTOMER NAME
+  ----------------------------------------- */
+
+  const customerName =
+    order?.customerName ||
+    orderData.customerName ||
+    "Customer";
+
+  /* -----------------------------------------
+     TOTAL
+  ----------------------------------------- */
+
+  const orderTotal =
+    order?.total ??
+    orderData.total ??
+    0;
+
+  /* -----------------------------------------
+     ADDRESS
+  ----------------------------------------- */
+
+  const orderAddress =
+    order?.address ||
+    (
+      orderData.address &&
+      orderData.city
+        ? orderData.address +
+          ", " +
+          orderData.city
+        : orderData.address
+    ) ||
+    "Not provided";
+
+  /* -----------------------------------------
+     PAYMENT
+  ----------------------------------------- */
+
+  const paymentMethod =
+    orderData.payment ||
+    "Cash on Delivery";
+
+  /* -----------------------------------------
+     STATUS TEXT
+  ----------------------------------------- */
+
+  function getStatusText() {
+    if (
+      orderStatus ===
+      "Pending"
+    ) {
+      return "Order received";
+    }
+
+    if (
+      orderStatus ===
+      "Preparing"
+    ) {
+      return "Preparing your order";
+    }
+
+    if (
+      orderStatus ===
+      "Out for Delivery"
+    ) {
+      return "Your order is out for delivery";
+    }
+
+    if (
+      orderStatus ===
+      "Delivered"
+    ) {
+      return "Your order has been delivered";
+    }
+
+    if (
+      orderStatus ===
+      "Cancelled"
+    ) {
+      return "Your order has been cancelled";
+    }
+
+    return "Preparing your order";
+  }
+
+  if (loading) {
+    return (
+      <main className="order-page">
+        <div className="order-card">
+          <div className="order-confirmed-label">
+            <span className="order-check">
+              ✓
+            </span>
+
+            <span>
+              ORDER CONFIRMED
+            </span>
+          </div>
+
+          <div className="order-status-icon">
+            🛵
+          </div>
+
+          <h1>
+            LOADING ORDER
+          </h1>
+
+          <p className="order-subtitle">
+            Please wait while we load your order.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (error && !order) {
+    return (
+      <main className="order-page">
+        <div className="order-card">
+          <div className="order-confirmed-label">
+            <span className="order-check">
+              ✓
+            </span>
+
+            <span>
+              ORDER CONFIRMED
+            </span>
+          </div>
+
+          <div className="order-status-icon">
+            🛵
+          </div>
+
+          <h1>
+            ORDER PLACED
+          </h1>
+
+          <p className="order-subtitle">
+            Your order was placed successfully.
+          </p>
+
+          <p className="order-description">
+            {error}
+          </p>
+
+          <button
+            className="primary-btn"
+            onClick={function () {
+              navigate("/");
+            }}
+          >
+            Back to Home
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
+    <main className="order-page">
 
-    <main
-      style={{
-        minHeight: "80vh",
-        background: "#fff",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "50px 20px",
-      }}
-    >
+      {/* =====================================================
+          MAIN ORDER CARD
+      ===================================================== */}
 
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "650px",
-          textAlign: "center",
-          background: "#ffffff",
-          padding: "45px 30px",
-          borderRadius: "24px",
-          boxShadow:
-            "0 15px 50px rgba(0,0,0,0.10)",
-        }}
-      >
+      <div className="order-card">
 
-        {/* PROGRESS */}
+        {/* TOP LABEL */}
 
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            marginBottom: "30px",
-          }}
-        >
+        <div className="order-confirmed-label">
+          <span className="order-check">
+            ✓
+          </span>
 
-          <div
-            style={{
-              width: "70px",
-              height: "5px",
-              background: "#b21f3a",
-              borderRadius: "10px",
-            }}
-          />
-
-          <div
-            style={{
-              width: "70px",
-              height: "5px",
-              background: "#eadfe1",
-              borderRadius: "10px",
-            }}
-          />
-
-          <div
-            style={{
-              width: "70px",
-              height: "5px",
-              background: "#eadfe1",
-              borderRadius: "10px",
-            }}
-          />
-
-          <div
-            style={{
-              width: "70px",
-              height: "5px",
-              background: "#eadfe1",
-              borderRadius: "10px",
-            }}
-          />
-
+          <span>
+            ORDER CONFIRMED
+          </span>
         </div>
-
-
-        {/* STEP */}
-
-        <p
-          style={{
-            color: "#b21f3a",
-            fontWeight: "800",
-            fontSize: "22px",
-            letterSpacing: "2px",
-            marginBottom: "15px",
-          }}
-        >
-          STEP 1
-        </p>
-
 
         {/* DELIVERY ICON */}
 
         <div
-          style={{
-            fontSize: "75px",
-            marginBottom: "10px",
-          }}
+          className={`order-status-icon ${
+            canReview
+              ? "order-delivered-icon"
+              : ""
+          }`}
         >
-          🛵
+          {isCancelled
+            ? "✕"
+            : canReview
+            ? "✓"
+            : "🛵"}
         </div>
+{orderStatus === "Cancelled" ? (
+          <>
+            <div className="delivered-label">
+              ORDER CANCELLED
+            </div>
 
+            <h1 className="delivered-heading">
+              ORDER CANCELLED
+            </h1>
 
-        {/* ORDER PLACED */}
+            <p className="order-subtitle">
+              Unfortunately, your order has been cancelled.
+            </p>
 
-        <h1
-          style={{
-            fontSize: "48px",
-            fontWeight: "900",
-            color: "#111",
-            margin: "10px 0 20px",
-            letterSpacing: "1px",
-          }}
-        >
-          ORDER PLACED
-        </h1>
+            <div className="delivered-status">
+              <span>
+                ✕
+              </span>
 
+              <span>
+                Your order has been cancelled
+              </span>
+            </div>
 
-        {/* DELIVERY */}
+            <p className="order-description">
+              Please contact Trattoria if you need
+              more information about your order.
+            </p>
 
-        <p
-          style={{
-            fontSize: "22px",
-            color: "#555",
-            marginBottom: "8px",
-          }}
-        >
-          Expected Delivery Time
-        </p>
+            <div
+              style={{
+                marginTop: "25px",
+              }}
+            >
+              <button
+                className="primary-btn"
+                onClick={function () {
+                  localStorage.removeItem(
+                    "trattoria_active_order_id"
+                  );
+                  window.location.href = "/";
+                }}
+              >
+                Back to Home
+              </button>
+            </div>
+          </>
+        ) : orderStatus === "Delivered" ? (
+          <>
+            <div className="delivered-label">
+              ORDER DELIVERED
+            </div>
 
+            <h1 className="delivered-heading">
+              THANK YOU!
+            </h1>
 
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background:
-              "linear-gradient(135deg, #fff2f4, #ffe5ea)",
-            borderRadius: "18px",
-            padding: "18px 35px",
-            margin: "10px 0 25px",
-          }}
-        >
+            <p className="order-subtitle">
+              Your order has been delivered.
+              We hope you enjoyed your
+              Trattoria experience.
+            </p>
 
-          <strong
-            style={{
-              fontSize: "38px",
-              color: "#b21f3a",
-            }}
-          >
-            30–40
-          </strong>
+            <div className="delivered-status">
+              <span>
+                ✓
+              </span>
 
-          <span
-            style={{
-              fontSize: "20px",
-              color: "#555",
-              marginLeft: "10px",
-            }}
-          >
-            minutes
-          </span>
+              <span>
+                Your order has been delivered
+              </span>
+            </div>
 
-        </div>
+            <p className="order-description">
+              Thank you for dining with
+              Trattoria. We look forward to
+              serving you again soon.
+            </p>
+            <div className="order-review-card">
+              {!reviewSubmitted ? (
+                <>
+                                  <div className="review-stars-large">
+                    {[1, 2, 3, 4, 5].map(function (star) {
+                      return (
+                        <span
+                          key={star}
+                          onClick={function () {
+                            setRating(star);
+                          }}
+                          style={{
+                            cursor: "pointer",
+                            color:
+                              star <= rating
+                                ? "#b07a4f"
+                                : "#d9c8b3",
+                            fontSize: "34px",
+                            margin: "0 4px",
+                            transition: "0.15s ease",
+                          }}
+                        >
+                          ★
+                        </span>
+                      );
+                    })}
+                  </div>
 
+                  <p
+                    style={{
+                      color: "#806f63",
+                      fontSize: "13px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    {rating === 5
+                      ? "Excellent"
+                      : rating === 4
+                      ? "Very Good"
+                      : rating === 3
+                      ? "Good"
+                      : rating === 2
+                      ? "Fair"
+                      : "Poor"}
+                  </p>
 
-        {/* MESSAGE */}
+                  <h2>Share Your Experience</h2>
 
-        <p
-          style={{
-            color: "#666",
-            fontSize: "17px",
-            lineHeight: "1.7",
-            maxWidth: "480px",
-            margin: "0 auto 25px",
-          }}
-        >
-          Your delicious food is being prepared
-          by our chefs. Our delivery rider will
-          bring your order to you as soon as
-          possible.
-        </p>
+                  <p>
+                    Your feedback helps us make
+                    every Trattoria experience
+                    better.
+                  </p>
 
+                  <form onSubmit={submitReview}>
+                    <textarea
+                      value={review}
+                      onChange={function (e) {
+                        setReview(e.target.value);
+                      }}
+                      placeholder="Tell us about your meal..."
+                      maxLength="500"
+                      required
+                    />
+                    <div className="review-character-count">
+                      {review.length}/500
+                    </div>
 
-        {/* ORDER INFO */}
+                    {reviewError && (
+                      <p
+                        style={{
+                          color: "#b21f3a",
+                          background: "#fff2f4",
+                          border: "1px solid #f3c2cc",
+                          padding: "10px 14px",
+                          borderRadius: "8px",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          margin: "10px 0 0",
+                        }}
+                      >
+                        ⚠ {reviewError}
+                      </p>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="order-review-btn"
+                    >
+                      Submit Review
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div className="review-success">
+                  <div className="review-success-icon">✓</div>
+
+                  <h2>Thank You!</h2>
+
+                  <p>Your feedback means a lot to Trattoria.</p>
+                </div>
+              )}
+            </div>
+            <div
+              style={{
+                marginTop: "25px",
+              }}
+            >
+              <button
+                className="primary-btn"
+                onClick={function () {
+                  localStorage.removeItem(
+                    "trattoria_active_order_id"
+                  );
+                  window.location.href = "/";
+                }}
+              >
+                Back to Home
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h1>
+              {orderStatus === "Pending"
+                ? "ORDER RECEIVED"
+                : orderStatus === "Preparing"
+                ? "PREPARING YOUR ORDER"
+                : orderStatus === "Out for Delivery"
+                ? "OUT FOR DELIVERY"
+                : "ORDER PLACED"}
+            </h1>
+
+            <p className="order-subtitle">
+              {orderStatus === "Pending"
+                ? "We have received your order."
+                : orderStatus === "Preparing"
+                ? "Our chefs are preparing your meal."
+                : orderStatus === "Out for Delivery"
+                ? "Your order is on the way to you."
+                : "Your order is being prepared."}
+            </p>
+
+            <div className="delivery-status">
+              <span className="delivery-status-dot"></span>
+
+              <span>
+                {getStatusText()}
+              </span>
+            </div>
+
+                        <div className="delivery-time-card">
+              <span className="delivery-time-label">
+                EXPECTED DELIVERY
+              </span>
+
+              <div className="delivery-time">
+                <strong>30–40</strong>
+                <span>minutes</span>
+              </div>
+            </div>
+
+            <p className="order-description">
+              Your delicious food is being
+              prepared by our chefs. Our
+              delivery rider will bring your
+              order to you as soon as possible.
+            </p>
+          </>
+        )}
+            
+        {/* =====================================================
+            ORDER INFORMATION
+        ===================================================== */}
 
         {showInfo && (
+          <div className="order-info">
 
-          <div
-            style={{
-              background: "#faf7f7",
-              borderRadius: "16px",
-              padding: "20px",
-              marginBottom: "25px",
-              textAlign: "left",
-            }}
-          >
+            <div className="order-info-title">
+              ORDER DETAILS
+            </div>
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "10px",
-              }}
-            >
+            <div className="order-info-grid">
 
-              <span>
-                Order Number
-              </span>
+              <div className="order-info-item">
+                <span>
+                  ORDER NUMBER
+                </span>
 
-              <strong>
-                #{orderData?.orderNumber || "TR000000"}
-              </strong>
+                <strong>
+                  {orderNumber}
+                </strong>
+              </div>
+
+              <div className="order-info-item">
+                <span>
+                  CUSTOMER
+                </span>
+
+                <strong>
+                  {customerName}
+                </strong>
+              </div>
+
+              <div className="order-info-item">
+                <span>
+                  TOTAL
+                </span>
+
+                <strong>
+                  $
+                  {Number(
+                    orderTotal
+                  ).toFixed(2)}
+                </strong>
+              </div>
+
+              <div className="order-info-item">
+                <span>
+                  PAYMENT
+                </span>
+
+                <strong>
+                  {paymentMethod}
+                </strong>
+              </div>
+
+              <div className="order-info-item full-width">
+                <span>
+                  DELIVERY ADDRESS
+                </span>
+
+                <strong>
+                  {orderAddress}
+                </strong>
+              </div>
+
+              <div className="order-info-item">
+                <span>
+                  STATUS
+                </span>
+
+                <strong>
+                  {orderStatus}
+                </strong>
+              </div>
 
             </div>
 
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
+            <button
+              type="button"
+              className="order-info-toggle"
+              onClick={function () {
+                setShowInfo(false);
               }}
             >
-
-              <span>
-                Total Payment
-              </span>
-
-              <strong>
-                $
-                {orderData?.total
-                  ? Number(
-                      orderData.total
-                    ).toFixed(2)
-                  : "0.00"}
-              </strong>
-
-            </div>
+              Hide Order Details
+            </button>
 
           </div>
-
         )}
 
-
-        {/* BUTTONS */}
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-
+        {!showInfo && (
           <button
-            onClick={() =>
-              setShowInfo(!showInfo)
-            }
-            style={{
-              padding: "13px 22px",
-              borderRadius: "10px",
-              border: "1px solid #ddd",
-              background: "#fff",
-              cursor: "pointer",
-              fontWeight: "600",
+            type="button"
+            className="order-info-toggle"
+            onClick={function () {
+              setShowInfo(true);
             }}
           >
-            {showInfo
-              ? "Hide Details"
-              : "View Details"}
+            Show Order Details
           </button>
-
-
-          <button
-            onClick={() =>
-              navigate("/menu")
-            }
-            style={{
-              padding: "13px 25px",
-              borderRadius: "10px",
-              border: "none",
-              background: "#b21f3a",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: "700",
-            }}
-          >
-            Order More Food
-          </button>
-
-        </div>
+        )}
 
       </div>
-
     </main>
-
   );
 }
-
 
 /* =========================================================
    GALLERY
 ========================================================= */
 
 function Gallery() {
-
   const images = [
-
     "https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=1000&q=85",
-
     "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&w=1000&q=85",
-
     "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1000&q=85",
-
     "https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=1000&q=85",
-
     "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1000&q=85",
-
     "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=85",
-
   ];
 
-
   return (
-
     <main className="page">
-
       <p className="small-title">
         OUR RESTAURANT
       </p>
-
 
       <h1>
         Gallery
       </h1>
 
-
       <div className="gallery">
-
-        {images.map(
-          (image, index) => (
-
+        {images.map(function (
+          image,
+          index
+        ) {
+          return (
             <img
               key={index}
               src={image}
-              alt={`Trattoria ${index + 1}`}
+              alt={
+                "Trattoria " +
+                (index + 1)
+              }
             />
-
-          )
-        )}
-
+          );
+        })}
       </div>
-
     </main>
-
   );
 }
-
 
 /* =========================================================
    REVIEWS
 ========================================================= */
 
 function Reviews() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
+
+  const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function fetchReviews() {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(
+        "https://trattoria-backend-production.up.railway.app/api/reviews"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to load reviews");
+      }
+
+      const data = await response.json();
+
+      setReviews(data);
+    } catch (error) {
+      console.error("Reviews error:", error);
+      setError("Unable to load reviews.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    setFormError("");
+
+    if (name.trim().length < 2) {
+      setFormError(
+        "Name must be at least 2 characters."
+      );
+      return;
+    }
+
+    if (comment.trim().length < 5) {
+      setFormError(
+        "Review must be at least 5 characters."
+      );
+      return;
+    }
+
+    if (comment.trim().length > 500) {
+      setFormError(
+        "Review cannot exceed 500 characters."
+      );
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const response = await fetch(
+        "https://trattoria-backend-production.up.railway.app/api/reviews",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            name: name.trim(),
+            rating: Number(rating),
+            comment: comment.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to submit review"
+        );
+      }
+
+      setReviews(function (previous) {
+        return [data, ...previous];
+      });
+
+      setName("");
+      setRating(5);
+      setComment("");
+    } catch (error) {
+      console.error(
+        "Submit review error:",
+        error
+      );
+
+      setFormError(
+        "Unable to submit review. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-
-    <main className="page">
-
+    <main className="page reviews-page">
       <p className="small-title">
         GUEST EXPERIENCES
       </p>
-
 
       <h1>
         What Our Guests Say
       </h1>
 
+      <p className="reviews-intro">
+        Every visit has a story. Share yours with us.
+      </p>
 
-      <div className="reviews">
 
+      {/* REVIEWS */}
 
-        <div className="review">
+      <section className="reviews-section">
+        <div className="reviews-section-heading">
+          <span>FROM OUR GUESTS</span>
 
-          <div>
-            ★★★★★
-          </div>
-
-          <p>
-            "Amazing food, beautiful
-            atmosphere and wonderful service."
-          </p>
-
-          <strong>
-            Sarah M.
-          </strong>
-
+          <h2>
+            Recent Reviews
+          </h2>
         </div>
 
-
-        <div className="review">
-
-          <div>
-            ★★★★★
+        {loading ? (
+          <div className="reviews-loading">
+            Loading reviews...
           </div>
-
-          <p>
-            "The pasta was incredible.
-            Definitely one of my favorite
-            restaurants."
-          </p>
-
-          <strong>
-            James R.
-          </strong>
-
-        </div>
-
-
-        <div className="review">
-
-          <div>
-            ★★★★★
+        ) : error ? (
+          <div className="reviews-error">
+            {error}
           </div>
+        ) : reviews.length === 0 ? (
+          <div className="reviews-empty">
+            <h3>
+              No reviews yet
+            </h3>
 
-          <p>
-            "Authentic Italian taste and a
-            very relaxing atmosphere."
-          </p>
+            <p>
+              Be the first guest to share your experience.
+            </p>
+          </div>
+        ) : (
+          <div className="reviews">
+            {reviews.map(function (review) {
+              return (
+                <div
+                  className="review"
+                  key={review._id}
+                >
+                  <div className="review-stars">
+                    {"★".repeat(review.rating)}
+                    {"☆".repeat(5 - review.rating)}
+                  </div>
 
-          <strong>
-            Olivia K.
-          </strong>
+                  <p>
+                    "{review.comment}"
+                  </p>
 
-        </div>
-
-
-      </div>
-
+                  <strong>
+                    {review.name}
+                  </strong>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
-
 
 /* =========================================================
    CONTACT
 ========================================================= */
 
 function Contact() {
-
   return (
-
     <main className="page">
-
       <p className="small-title">
         GET IN TOUCH
       </p>
-
 
       <h1>
         Contact Us
       </h1>
 
-
       <div className="contact-box">
-
-
         <div>
-
           <h2>
             Visit Trattoria
           </h2>
@@ -1867,40 +2390,31 @@ function Contact() {
           <p>
             ✉️ hello@trattoria.com
           </p>
-
         </div>
 
-
         <div>
-
           <h2>
             Opening Hours
           </h2>
 
           <p>
-            Monday – Sunday
+            Monday – Thursday: 11:00 AM – 10:00 PM
           </p>
 
           <p>
-            11:00 AM – 11:00 PM
+            Friday – Sunday: 11:00 AM – 11:30 PM
           </p>
-
         </div>
-
-
       </div>
-
     </main>
   );
 }
-
 
 /* =========================================================
    RESERVATION
 ========================================================= */
 
 function Reservation() {
-
   const [name, setName] =
     useState("");
 
@@ -1919,181 +2433,487 @@ function Reservation() {
   const [guests, setGuests] =
     useState("");
 
+  const [loading, setLoading] =
+    useState(false);
 
-  const handleReservation = (e) => {
+  const [message, setMessage] =
+    useState("");
 
+  const [error, setError] =
+    useState("");
+
+  async function handleReservation(e) {
     e.preventDefault();
 
+    setMessage("");
+    setError("");
 
-    alert(
-      `Your reservation has been received! 🎉\n\nThank you ${name}!\n\nGuests: ${guests}\nDate: ${date}\nTime: ${time}\n\nWe look forward to seeing you at Trattoria!`
+    const cleanName =
+      name.trim();
+
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+    const cleanPhone =
+      phone.trim();
+
+    /* -----------------------------------------
+       REQUIRED FIELDS
+    ----------------------------------------- */
+
+    if (
+      !cleanName ||
+      !cleanEmail ||
+      !cleanPhone ||
+      !date ||
+      !time ||
+      !guests
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       NAME
+    ----------------------------------------- */
+
+    const namePattern =
+      /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
+
+    if (
+      cleanName.length < 2 ||
+      cleanName.length > 50 ||
+      !namePattern.test(cleanName)
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       EMAIL
+    ----------------------------------------- */
+
+    const emailPattern =
+      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+
+    if (
+      cleanEmail.length < 6 ||
+      cleanEmail.length > 100 ||
+      !emailPattern.test(cleanEmail) ||
+      cleanEmail.includes("..")
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       PHONE
+    ----------------------------------------- */
+
+    let normalizedPhone =
+      cleanPhone.replace(
+        /[\s-]/g,
+        ""
+      );
+
+    if (
+      normalizedPhone.startsWith(
+        "+92"
+      )
+    ) {
+      normalizedPhone =
+        "0" +
+        normalizedPhone.slice(3);
+    }
+
+    const phonePattern =
+      /^03[0-9]{9}$/;
+
+    if (
+      !phonePattern.test(
+        normalizedPhone
+      )
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    const phoneDigits =
+      normalizedPhone.slice(1);
+
+    const allSame =
+      phoneDigits
+        .split("")
+        .every(function (digit) {
+          return (
+            digit ===
+            phoneDigits[0]
+          );
+        });
+
+    if (allSame) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       GUESTS
+       MAXIMUM 15 PEOPLE
+    ----------------------------------------- */
+
+    const guestNumber =
+      Number(guests);
+
+    if (
+      !Number.isInteger(
+        guestNumber
+      ) ||
+      guestNumber < 1 ||
+      guestNumber > 15
+    ) {
+      setError(
+        "Please enter valid data. Maximum 15 people can be reserved at a time."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       DATE
+    ----------------------------------------- */
+
+    const today =
+      new Date();
+
+    today.setHours(
+      0,
+      0,
+      0,
+      0
     );
 
+    const selectedDate =
+      new Date(
+        date +
+        "T00:00:00"
+      );
 
-    /*
-       CLEAR FORM AFTER ALERT
-    */
+    selectedDate.setHours(
+      0,
+      0,
+      0,
+      0
+    );
 
-    setName("");
-    setEmail("");
-    setPhone("");
-    setDate("");
-    setTime("");
-    setGuests("");
+    if (
+      Number.isNaN(
+        selectedDate.getTime()
+      ) ||
+      selectedDate < today
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
 
-  };
+    /* -----------------------------------------
+       TIME
+    ----------------------------------------- */
 
+    const timePattern =
+      /^([01]\d|2[0-3]):[0-5]\d$/;
+
+    if (
+      !timePattern.test(time)
+    ) {
+      setError(
+        "Please enter valid data."
+      );
+      return;
+    }
+
+    /* -----------------------------------------
+       SAVE RESERVATION
+    ----------------------------------------- */
+
+    try {
+      setLoading(true);
+
+      const response =
+        await fetch(
+          "https://trattoria-backend-production.up.railway.app/api/reservations",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                name:
+                  cleanName,
+
+                email:
+                  cleanEmail,
+
+                phone:
+                  normalizedPhone,
+
+                date:
+                  date,
+
+                time:
+                  time,
+
+                guests:
+                  guestNumber,
+              }),
+          }
+        );
+
+      let data = {};
+
+      try {
+        data =
+          await response.json();
+      } catch {
+        data = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          "Reservation could not be saved"
+        );
+      }
+
+      setMessage(
+        "Reservation confirmed! Thank you " +
+        cleanName +
+        ". 🎉"
+      );
+
+      setName("");
+      setEmail("");
+      setPhone("");
+      setDate("");
+      setTime("");
+      setGuests("");
+    } catch (error) {
+      console.error(
+        "Reservation error:",
+        error
+      );
+
+      setError(
+        "Please enter valid data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-
     <main className="page reservation-page">
-
       <p className="small-title">
         BOOK YOUR TABLE
       </p>
-
 
       <h1>
         Make a Reservation
       </h1>
 
-
       <form
         className="reservation-form"
-        onSubmit={handleReservation}
+        onSubmit={
+          handleReservation
+        }
       >
-
-
         <input
           type="text"
           placeholder="Your Name"
           value={name}
-          onChange={(e) =>
+          onChange={function (
+            e
+          ) {
             setName(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
-
 
         <input
           type="email"
           placeholder="Email Address"
           value={email}
-          onChange={(e) =>
+          onChange={function (
+            e
+          ) {
             setEmail(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
-
 
         <input
           type="tel"
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) =>
+          onChange={function (
+            e
+          ) {
             setPhone(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
-
 
         <input
           type="date"
           value={date}
-          onChange={(e) =>
+          min={
+            new Date()
+              .toISOString()
+              .split("T")[0]
+          }
+          onChange={function (
+            e
+          ) {
             setDate(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
-
 
         <input
           type="time"
           value={time}
-          onChange={(e) =>
+          onChange={function (
+            e
+          ) {
             setTime(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
-
 
         <input
           type="number"
           placeholder="Number of Guests"
           min="1"
+          max="15"
           value={guests}
-          onChange={(e) =>
+          onChange={function (
+            e
+          ) {
             setGuests(
               e.target.value
-            )
-          }
+            );
+          }}
           required
         />
 
+        {error && (
+          <p className="reservation-error">
+            {error}
+          </p>
+        )}
+
+        {message && (
+          <p className="reservation-success">
+            {message}
+          </p>
+        )}
 
         <button
           type="submit"
           className="primary-btn"
+          disabled={loading}
         >
-          Confirm Reservation
+          {loading
+            ? "Saving Reservation..."
+            : "Confirm Reservation"}
         </button>
-
       </form>
-
     </main>
-
   );
 }
-
 
 /* =========================================================
    APP
 ========================================================= */
 
+function AdminRoute({ children }) {
+  const isAdmin =
+    localStorage.getItem(
+      "adminLoggedIn"
+    );
+
+  if (isAdmin !== "true") {
+    return (
+      <Navigate
+        to="/admin-login"
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
 function App() {
-
-  /*
-     GLOBAL CART
-
-     Menu → Cart → Checkout
-     all share this same cart.
-  */
-
   const [cart, setCart] =
     useState([]);
 
-
   const cartCount =
-    cart.reduce(
-      (total, item) =>
-        total + item.quantity,
-      0
-    );
-
+    cart.reduce(function (
+      total,
+      item
+    ) {
+      return (
+        total + item.quantity
+      );
+    }, 0);
 
   return (
-
     <BrowserRouter>
-
       <Navbar
         cartCount={cartCount}
       />
 
-
       <Routes>
 
+        <Route
+          path="/admin-login"
+          element={
+            <AdminLogin />
+          }
+        />
 
-        {/* HOME */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
 
         <Route
           path="/"
@@ -2102,18 +2922,12 @@ function App() {
           }
         />
 
-
-        {/* ABOUT */}
-
         <Route
           path="/about"
           element={
             <About />
           }
         />
-
-
-        {/* MENU */}
 
         <Route
           path="/menu"
@@ -2125,9 +2939,6 @@ function App() {
           }
         />
 
-
-        {/* CHECKOUT */}
-
         <Route
           path="/checkout"
           element={
@@ -2138,18 +2949,12 @@ function App() {
           }
         />
 
-
-        {/* ORDER PLACED */}
-
         <Route
           path="/order-placed"
           element={
             <OrderPlaced />
           }
         />
-
-
-        {/* GALLERY */}
 
         <Route
           path="/gallery"
@@ -2158,8 +2963,7 @@ function App() {
           }
         />
 
-
-        {/* REVIEWS */}
+        {/* PUBLIC - customers can add reviews */}
 
         <Route
           path="/reviews"
@@ -2168,18 +2972,12 @@ function App() {
           }
         />
 
-
-        {/* CONTACT */}
-
         <Route
           path="/contact"
           element={
             <Contact />
           }
         />
-
-
-        {/* RESERVATION */}
 
         <Route
           path="/reservation"
@@ -2188,12 +2986,47 @@ function App() {
           }
         />
 
+        {/* ADMIN ONLY */}
+
+        <Route
+          path="/manage-menu"
+          element={
+            <AdminRoute>
+              <ManageMenu />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/manage-orders"
+          element={
+            <AdminRoute>
+              <ManageOrders />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/manage-reservations"
+          element={
+            <AdminRoute>
+              <ManageReservations />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/manage-reviews"
+          element={
+            <AdminRoute>
+              <ManageReviews />
+            </AdminRoute>
+          }
+        />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
-
 
 export default App;
