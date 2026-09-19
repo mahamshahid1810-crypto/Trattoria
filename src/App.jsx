@@ -2733,102 +2733,102 @@ function Reservation() {
       <h1>
         Make a Reservation
       </h1>
-
       <form
         className="reservation-form"
         onSubmit={
           handleReservation
         }
       >
-        <input
-          type="text"
-          placeholder="Your Name"
-          value={name}
-          onChange={function (
-            e
-          ) {
-            setName(
-              e.target.value
-            );
-          }}
-          required
-        />
+        <div className="reservation-field">
+          <label htmlFor="res-name">Your Name</label>
 
-        <input
-          type="email"
-          placeholder="Email Address"
-          value={email}
-          onChange={function (
-            e
-          ) {
-            setEmail(
-              e.target.value
-            );
-          }}
-          required
-        />
+          <input
+            id="res-name"
+            type="text"
+            placeholder="Enter your full name"
+            value={name}
+            onChange={function (e) {
+              setName(e.target.value);
+            }}
+            required
+          />
+        </div>
 
-        <input
-          type="tel"
-          placeholder="Phone Number"
-          value={phone}
-          onChange={function (
-            e
-          ) {
-            setPhone(
-              e.target.value
-            );
-          }}
-          required
-        />
+        <div className="reservation-field">
+          <label htmlFor="res-email">Email Address</label>
 
-        <input
-          type="date"
-          value={date}
-          min={
-            new Date()
-              .toISOString()
-              .split("T")[0]
-          }
-          onChange={function (
-            e
-          ) {
-            setDate(
-              e.target.value
-            );
-          }}
-          required
-        />
+          <input
+            id="res-email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={function (e) {
+              setEmail(e.target.value);
+            }}
+            required
+          />
+        </div>
 
-        <input
-          type="time"
-          value={time}
-          onChange={function (
-            e
-          ) {
-            setTime(
-              e.target.value
-            );
-          }}
-          required
-        />
+        <div className="reservation-field">
+          <label htmlFor="res-phone">Phone Number</label>
 
-        <input
-          type="number"
-          placeholder="Number of Guests"
-          min="1"
-          max="15"
-          value={guests}
-          onChange={function (
-            e
-          ) {
-            setGuests(
-              e.target.value
-            );
-          }}
-          required
-        />
+          <input
+            id="res-phone"
+            type="tel"
+            placeholder="03001234567"
+            value={phone}
+            onChange={function (e) {
+              setPhone(e.target.value);
+            }}
+            required
+          />
+        </div>
 
+        <div className="reservation-field">
+          <label htmlFor="res-date">Select Date</label>
+
+          <input
+            id="res-date"
+            type="date"
+            value={date}
+            min={new Date().toISOString().split("T")[0]}
+            onChange={function (e) {
+              setDate(e.target.value);
+            }}
+            required
+          />
+        </div>
+
+        <div className="reservation-field">
+          <label htmlFor="res-time">Select Time</label>
+
+          <input
+            id="res-time"
+            type="time"
+            value={time}
+            onChange={function (e) {
+              setTime(e.target.value);
+            }}
+            required
+          />
+        </div>
+
+        <div className="reservation-field">
+          <label htmlFor="res-guests">Number of Guests</label>
+
+          <input
+            id="res-guests"
+            type="number"
+            placeholder="1–15"
+            min="1"
+            max="15"
+            value={guests}
+            onChange={function (e) {
+              setGuests(e.target.value);
+            }}
+            required
+          />
+        </div>
         {error && (
           <p className="reservation-error">
             {error}
