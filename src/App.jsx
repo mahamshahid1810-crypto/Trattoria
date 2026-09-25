@@ -197,20 +197,14 @@ function Home() {
   }, []);
   return (
     <main>
-      <section className="hero">
-        <div className="hero-slideshow">
-          {heroImages.map((img, i) => (
-            <div
-              key={i}
-              className={`hero-slide ${
-                i === currentSlide ? "active" : ""
-              }`}
-              style={{ backgroundImage: `url(${img})` }}
-            />
-          ))}
-          <div className="hero-overlay"></div>
-        </div>
-
+         <section
+        className="hero"
+        style={{
+          backgroundImage: `linear-gradient(90deg, rgba(15,12,10,0.82), rgba(15,12,10,0.48), rgba(15,12,10,0.15)), url(${heroImages[currentSlide]})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="hero-content">
           <OpenStatus openHour={11} closeHour={22} />
           <p>
