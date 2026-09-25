@@ -2241,3 +2241,28 @@ img {
 .hero-content > p:first-child {
   color: #e8c99d !important;
 }
+/* ADMIN — empty state text fix */
+.manage-reviews-page h2,
+.manage-reviews-page h3,
+.manage-reviews-page p {
+  color: #171513;
+}
+
+.manage-reviews-page h2,
+.manage-reviews-page h3 {
+  color: #171513 !important;
+}
+
+.manage-reviews-page p {
+  color: #77716a !important;
+}
+
+/* Broad fallback — catches any white-on-cream admin text */
+main h2,
+main h3 {
+  color: #171513;
+}
+
+main p {
+  color: #5f5953;
+}
