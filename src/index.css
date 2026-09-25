@@ -4857,3 +4857,42 @@ main.manage-orders-page {
   .hero h1 { font-size: 34px; }
   .hero-content > p:nth-of-type(2) { font-size: 13px; }
 }
+/* Reservation form select — match inputs */
+.reservation-form select {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  background: #fcfaf7;
+  font-family: inherit;
+  font-size: 15px;
+  color: #171513;
+  transition: 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b4f35' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.reservation-form select:focus {
+  border-color: var(--brown);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(139, 79, 53, 0.08);
+}
+
+/* Give each field its own row inside the grid */
+.reservation-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reservation-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3f3934;
+  margin-bottom: 2px;
+}
