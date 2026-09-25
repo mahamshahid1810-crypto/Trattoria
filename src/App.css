@@ -208,13 +208,12 @@ img {
   background-position: center;
 }
 
-
 .hero-content {
   max-width: 680px;
-
   color: white;
+  position: relative;
+  z-index: 10;
 }
-
 
 .hero-content > p:first-child {
   color: #e8c99d;
@@ -2177,16 +2176,4 @@ img {
   .hero h1 { font-size: 40px; }
   .hero-buttons { flex-direction: column; align-items: stretch; }
   .hero-buttons a { width: 100%; }
-}
-.hero-content {
-  position: relative !important;
-  z-index: 5 !important;
-}
-
-.hero-overlay {
-  z-index: 2 !important;
-}
-
-.hero-slideshow {
-  z-index: 1 !important;
 }
