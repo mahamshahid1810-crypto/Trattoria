@@ -435,7 +435,7 @@ function ManageMenu() {
                     </h3>
 
                     <strong>
-                      ${dish.price}
+                      Rs {dish.price}
                     </strong>
 
                   </div>
