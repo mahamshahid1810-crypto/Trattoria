@@ -2572,362 +2572,197 @@ function Contact() {
 /* =========================================================
    RESERVATION
 ========================================================= */
-
 function Reservation() {
-  const [name, setName] =
-    useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [guests, setGuests] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const [email, setEmail] =
-    useState("");
+  const [myReservation, setMyReservation] = useState(null);
+  const [checkingReservation, setCheckingReservation] = useState(true);
 
-  const [phone, setPhone] =
-    useState("");
+  const OPEN_HOUR = 11;
+  const CLOSE_HOUR = 22;
 
-  const [date, setDate] =
-    useState("");
-
-  const [time, setTime] =
-    useState("");
-
-  const [guests, setGuests] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [message, setMessage] =
-    useState("");
-
-   const [error, setError] =
-    useState("");
-
-  const [alreadyReserved, setAlreadyReserved] =
-    useState(false);
-
-  const [checkingReservation, setCheckingReservation] =
-    useState(true);
-
-  /* CHECK IF THIS DEVICE ALREADY HAS A RESERVATION */
   useEffect(() => {
     async function checkExisting() {
-      const savedId = localStorage.getItem(
-        "trattoria_my_reservation_id"
-      );
-
+      const savedId = localStorage.getItem("trattoria_my_reservation_id");
       if (!savedId) {
         setCheckingReservation(false);
         return;
       }
-
       try {
         const response = await fetch(
           "https://trattoria-backend-production.up.railway.app/api/reservations"
         );
-
         if (!response.ok) {
           setCheckingReservation(false);
           return;
         }
-
         const list = await response.json();
-
-        const stillExists = list.some(function (r) {
+        const found = list.find(function (r) {
           return r._id === savedId;
         });
-
-        if (stillExists) {
-          setAlreadyReserved(true);
+        if (found) {
+          setMyReservation(found);
         } else {
-          // Admin deleted it → allow new reservation
-          localStorage.removeItem(
-            "trattoria_my_reservation_id"
-          );
+          localStorage.removeItem("trattoria_my_reservation_id");
         }
       } catch (error) {
-        console.error(
-          "Reservation check failed:",
-          error
-        );
+        console.error("Reservation check failed:", error);
       } finally {
         setCheckingReservation(false);
       }
     }
-
     checkExisting();
   }, []);
 
+  useEffect(() => {
+    if (!myReservation) return;
+    const savedId = localStorage.getItem("trattoria_my_reservation_id");
+    if (!savedId) return;
+    async function refresh() {
+      try {
+        const response = await fetch(
+          "https://trattoria-backend-production.up.railway.app/api/reservations"
+        );
+        if (!response.ok) return;
+        const list = await response.json();
+        const found = list.find(function (r) {
+          return r._id === savedId;
+        });
+        if (!found) {
+          localStorage.removeItem("trattoria_my_reservation_id");
+          setMyReservation(null);
+        } else {
+          setMyReservation(found);
+        }
+      } catch (error) {
+        console.error("Refresh failed:", error);
+      }
+    }
+    const timer = setInterval(refresh, 10000);
+    return function () {
+      clearInterval(timer);
+    };
+  }, [myReservation]);
+
   async function handleReservation(e) {
-
     e.preventDefault();
-
     setMessage("");
     setError("");
 
-    const cleanName =
-      name.trim();
+    const cleanName = name.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
 
-    const cleanEmail =
-      email.trim().toLowerCase();
-
-    const cleanPhone =
-      phone.trim();
-
-    /* -----------------------------------------
-       REQUIRED FIELDS
-    ----------------------------------------- */
-
-    if (
-      !cleanName ||
-      !cleanEmail ||
-      !cleanPhone ||
-      !date ||
-      !time ||
-      !guests
-    ) {
-      setError(
-        "Please enter valid data."
-      );
+    if (!cleanName || !cleanEmail || !cleanPhone || !date || !time || !guests) {
+      setError("Please enter valid data.");
       return;
     }
 
-    /* -----------------------------------------
-       NAME
-    ----------------------------------------- */
-
-    const namePattern =
-      /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
-
-    if (
-      cleanName.length < 2 ||
-      cleanName.length > 50 ||
-      !namePattern.test(cleanName)
-    ) {
-      setError(
-        "Please enter valid data."
-      );
+    const namePattern = /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/;
+    if (cleanName.length < 2 || cleanName.length > 50 || !namePattern.test(cleanName)) {
+      setError("Please enter valid data.");
       return;
     }
 
-    /* -----------------------------------------
-       EMAIL
-    ----------------------------------------- */
-
-    const emailPattern =
-      /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-
+    const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     if (
       cleanEmail.length < 6 ||
       cleanEmail.length > 100 ||
       !emailPattern.test(cleanEmail) ||
       cleanEmail.includes("..")
     ) {
-      setError(
-        "Please enter valid data."
-      );
+      setError("Please enter valid data.");
       return;
     }
 
-    /* -----------------------------------------
-       PHONE
-    ----------------------------------------- */
-
-    let normalizedPhone =
-      cleanPhone.replace(
-        /[\s-]/g,
-        ""
-      );
-
-    if (
-      normalizedPhone.startsWith(
-        "+92"
-      )
-    ) {
-      normalizedPhone =
-        "0" +
-        normalizedPhone.slice(3);
+    let normalizedPhone = cleanPhone.replace(/[\s-]/g, "");
+    if (normalizedPhone.startsWith("+92")) {
+      normalizedPhone = "0" + normalizedPhone.slice(3);
     }
-
-    const phonePattern =
-      /^03[0-9]{9}$/;
-
-    if (
-      !phonePattern.test(
-        normalizedPhone
-      )
-    ) {
-      setError(
-        "Please enter valid data."
-      );
+    const phonePattern = /^03[0-9]{9}$/;
+    if (!phonePattern.test(normalizedPhone)) {
+      setError("Please enter valid data.");
       return;
     }
-
-    const phoneDigits =
-      normalizedPhone.slice(1);
-
-    const allSame =
-      phoneDigits
-        .split("")
-        .every(function (digit) {
-          return (
-            digit ===
-            phoneDigits[0]
-          );
-        });
-
+    const phoneDigits = normalizedPhone.slice(1);
+    const allSame = phoneDigits.split("").every(function (digit) {
+      return digit === phoneDigits[0];
+    });
     if (allSame) {
-      setError(
-        "Please enter valid data."
-      );
+      setError("Please enter valid data.");
       return;
     }
 
-    /* -----------------------------------------
-       GUESTS
-       MAXIMUM 15 PEOPLE
-    ----------------------------------------- */
-
-    const guestNumber =
-      Number(guests);
-
-    if (
-      !Number.isInteger(
-        guestNumber
-      ) ||
-      guestNumber < 1 ||
-      guestNumber > 15
-    ) {
-      setError(
-        "Please enter valid data. Maximum 15 people can be reserved at a time."
-      );
+    const guestNumber = Number(guests);
+    if (!Number.isInteger(guestNumber) || guestNumber < 1 || guestNumber > 15) {
+      setError("Please enter valid data. Maximum 15 people can be reserved at a time.");
       return;
     }
 
-    /* -----------------------------------------
-       DATE
-    ----------------------------------------- */
-
-    const today =
-      new Date();
-
-    today.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-
-    const selectedDate =
-      new Date(
-        date +
-        "T00:00:00"
-      );
-
-    selectedDate.setHours(
-      0,
-      0,
-      0,
-      0
-    );
-
-    if (
-      Number.isNaN(
-        selectedDate.getTime()
-      ) ||
-      selectedDate < today
-    ) {
-      setError(
-        "Please enter valid data."
-      );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(date + "T00:00:00");
+    selectedDate.setHours(0, 0, 0, 0);
+    if (Number.isNaN(selectedDate.getTime()) || selectedDate < today) {
+      setError("Please enter valid data.");
       return;
     }
 
-    /* -----------------------------------------
-       TIME
-    ----------------------------------------- */
-
-    const timePattern =
-      /^([01]\d|2[0-3]):[0-5]\d$/;
-
-    if (
-      !timePattern.test(time)
-    ) {
-      setError(
-        "Please enter valid data."
-      );
+    const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (!timePattern.test(time)) {
+      setError("Please enter valid data.");
       return;
     }
-
-    /* -----------------------------------------
-       SAVE RESERVATION
-    ----------------------------------------- */
+    const hourPart = Number(time.split(":")[0]);
+    const minutePart = Number(time.split(":")[1]);
+    if (hourPart < OPEN_HOUR || hourPart >= CLOSE_HOUR || (hourPart === CLOSE_HOUR - 1 && minutePart > 30)) {
+      setError("Reservation time must be between 11:00 AM and 9:30 PM.");
+      return;
+    }
 
     try {
       setLoading(true);
-
-      const response =
-        await fetch(
-          "https://trattoria-backend-production.up.railway.app/api/reservations",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                name:
-                  cleanName,
-
-                email:
-                  cleanEmail,
-
-                phone:
-                  normalizedPhone,
-
-                date:
-                  date,
-
-                time:
-                  time,
-
-                guests:
-                  guestNumber,
-              }),
-          }
-        );
+      const response = await fetch(
+        "https://trattoria-backend-production.up.railway.app/api/reservations",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+            phone: normalizedPhone,
+            date: date,
+            time: time,
+            guests: guestNumber,
+          }),
+        }
+      );
 
       let data = {};
-
       try {
-        data =
-          await response.json();
+        data = await response.json();
       } catch {
         data = {};
       }
 
       if (!response.ok) {
-        throw new Error(
-          "Reservation could not be saved"
-        );
+        throw new Error("Reservation could not be saved");
       }
 
-        if (data._id) {
-        localStorage.setItem(
-          "trattoria_my_reservation_id",
-          data._id.toString()
-        );
+      if (data._id) {
+        localStorage.setItem("trattoria_my_reservation_id", data._id.toString());
       }
 
-      setAlreadyReserved(true);
-
-      setMessage(
-        "Reservation confirmed! Thank you " +
-        cleanName +
-        ". 🎉"
-      );
-
+      setMyReservation(data);
+      setMessage("Reservation confirmed! Thank you " + cleanName + ". 🎉");
       setName("");
       setEmail("");
       setPhone("");
@@ -2935,14 +2770,8 @@ function Reservation() {
       setTime("");
       setGuests("");
     } catch (error) {
-      console.error(
-        "Reservation error:",
-        error
-      );
-
-      setError(
-        "Please enter valid data."
-      );
+      console.error("Reservation error:", error);
+      setError("Please enter valid data.");
     } finally {
       setLoading(false);
     }
@@ -2950,116 +2779,62 @@ function Reservation() {
 
   if (checkingReservation) {
     return (
-      <main className="page reservation-page">
-        <p className="small-title">
-          BOOK YOUR TABLE
-        </p>
-
-        <h1>Make a Reservation</h1>
-
-        <p
-          style={{
-            marginTop: "30px",
-            color: "#77716a",
-          }}
-        >
-          Checking your reservations…
-        </p>
+      <main style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#faf7f2" }}>
+        <p style={{ color: "#77716a" }}>Checking your reservations…</p>
       </main>
     );
   }
 
-  if (alreadyReserved) {
+  if (myReservation) {
+    const r = myReservation;
+    const firstLetter = (r.name || "G").charAt(0).toUpperCase();
     return (
-      <main
-        style={{
-          minHeight: "80vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "80px 20px",
-          background: "#faf7f2",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "560px",
-            width: "100%",
-            background: "#ffffff",
-            border: "1px solid #e9e1d8",
-            borderRadius: "24px",
-            padding: "50px 40px",
-            textAlign: "center",
-            boxShadow: "0 20px 50px rgba(45, 30, 20, 0.08)",
-          }}
-        >
-          <div
-            style={{
-              width: "70px",
-              height: "70px",
-              borderRadius: "50%",
-              background: "#f3ede6",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 22px",
-              fontSize: "32px",
-            }}
-          >
-            🍽️
+      <main style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 20px", background: "#faf7f2" }}>
+        <div style={{ maxWidth: "620px", width: "100%", background: "#ffffff", border: "1px solid #e9e1d8", borderRadius: "24px", padding: "45px 40px", textAlign: "center", boxShadow: "0 20px 50px rgba(45, 30, 20, 0.08)" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "#eaf6ea", border: "1px solid #b9dfb9", color: "#2f7a3f", padding: "6px 14px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, letterSpacing: "2px", marginBottom: "22px" }}>
+            ✓ RESERVATION CONFIRMED
           </div>
 
-          <p
-            style={{
-              color: "#8b4f35",
-              fontSize: "12px",
-              fontWeight: 700,
-              letterSpacing: "4px",
-              marginBottom: "12px",
-              textTransform: "uppercase",
-            }}
-          >
-            Reservation Locked
-          </p>
+          <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "#8b4f35", color: "#ffffff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 22px", fontSize: "28px", fontWeight: 700, fontFamily: '"Playfair Display", serif' }}>
+            {firstLetter}
+          </div>
 
-          <h2
-            style={{
-              fontFamily: '"Playfair Display", serif',
-              fontSize: "32px",
-              lineHeight: 1.2,
-              color: "#171513",
-              marginBottom: "14px",
-            }}
-          >
-            You already have a reservation
+          <h2 style={{ fontFamily: '"Playfair Display", serif', fontSize: "32px", lineHeight: 1.2, color: "#171513", marginBottom: "10px" }}>
+            Thank you, {r.name}!
           </h2>
 
-          <p
-            style={{
-              color: "#77716a",
-              fontSize: "15px",
-              lineHeight: 1.7,
-              marginBottom: "30px",
-            }}
-          >
-            Please contact Trattoria or wait until
-            your current reservation is cleared
-            before booking another table.
+          <p style={{ color: "#77716a", fontSize: "15px", lineHeight: 1.7, marginBottom: "32px" }}>
+            Your table has been booked at Trattoria. We look forward to serving you.
           </p>
 
-          <Link
-            to="/"
-            style={{
-              display: "inline-block",
-              background: "#171513",
-              color: "#ffffff",
-              padding: "13px 28px",
-              borderRadius: "50px",
-              fontWeight: 700,
-              fontSize: "14px",
-              textDecoration: "none",
-            }}
-          >
+          <div style={{ background: "#faf7f2", border: "1px solid #e9e1d8", borderRadius: "16px", padding: "24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px", textAlign: "left", marginBottom: "30px" }}>
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", color: "#8b4f35", marginBottom: "6px" }}>DATE</div>
+              <div style={{ color: "#171513", fontWeight: 700 }}>{r.date}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", color: "#8b4f35", marginBottom: "6px" }}>TIME</div>
+              <div style={{ color: "#171513", fontWeight: 700 }}>{r.time}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", color: "#8b4f35", marginBottom: "6px" }}>GUESTS</div>
+              <div style={{ color: "#171513", fontWeight: 700 }}>{r.guests} {Number(r.guests) === 1 ? "person" : "people"}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", color: "#8b4f35", marginBottom: "6px" }}>PHONE</div>
+              <div style={{ color: "#171513", fontWeight: 700 }}>{r.phone}</div>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "2px", color: "#8b4f35", marginBottom: "6px" }}>EMAIL</div>
+              <div style={{ color: "#171513", fontWeight: 700, wordBreak: "break-all" }}>{r.email}</div>
+            </div>
+          </div>
+
+          <p style={{ color: "#77716a", fontSize: "13px", marginBottom: "22px" }}>
+            Need to cancel or change? Please contact Trattoria directly.
+          </p>
+
+          <Link to="/" style={{ display: "inline-block", background: "#171513", color: "#ffffff", padding: "13px 28px", borderRadius: "50px", fontWeight: 700, fontSize: "14px", textDecoration: "none" }}>
             Back to Home
           </Link>
         </div>
@@ -3069,129 +2844,46 @@ function Reservation() {
 
   return (
     <main className="page reservation-page">
-      <p className="small-title">
-        BOOK YOUR TABLE
-      </p>
+      <p className="small-title">BOOK YOUR TABLE</p>
+      <h1>Make a Reservation</h1>
 
-      <h1>
-        Make a Reservation
-      </h1>
-      <form
-        className="reservation-form"
-        onSubmit={
-          handleReservation
-        }
-      >
+      <form className="reservation-form" onSubmit={handleReservation}>
         <div className="reservation-field">
           <label htmlFor="res-name">Your Name</label>
-
-          <input
-            id="res-name"
-            type="text"
-            placeholder="Enter your full name"
-            value={name}
-            onChange={function (e) {
-              setName(e.target.value);
-            }}
-            required
-          />
+          <input id="res-name" type="text" placeholder="Enter your full name" value={name} onChange={function (e) { setName(e.target.value); }} required />
         </div>
 
         <div className="reservation-field">
           <label htmlFor="res-email">Email Address</label>
-
-          <input
-            id="res-email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={function (e) {
-              setEmail(e.target.value);
-            }}
-            required
-          />
+          <input id="res-email" type="email" placeholder="Enter your email" value={email} onChange={function (e) { setEmail(e.target.value); }} required />
         </div>
 
         <div className="reservation-field">
           <label htmlFor="res-phone">Phone Number</label>
-
-          <input
-            id="res-phone"
-            type="tel"
-            placeholder="03001234567"
-            value={phone}
-            onChange={function (e) {
-              setPhone(e.target.value);
-            }}
-            required
-          />
+          <input id="res-phone" type="tel" placeholder="03001234567" value={phone} onChange={function (e) { setPhone(e.target.value); }} required />
         </div>
 
         <div className="reservation-field">
           <label htmlFor="res-date">Select Date</label>
-
-          <input
-            id="res-date"
-            type="date"
-            value={date}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={function (e) {
-              setDate(e.target.value);
-            }}
-            required
-          />
+          <input id="res-date" type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={function (e) { setDate(e.target.value); }} required />
         </div>
 
         <div className="reservation-field">
-          <label htmlFor="res-time">Select Time</label>
-
-          <input
-            id="res-time"
-            type="time"
-            value={time}
-            onChange={function (e) {
-              setTime(e.target.value);
-            }}
-            required
-          />
+          <label htmlFor="res-time">Select Time (11:00 AM – 9:30 PM)</label>
+          <input id="res-time" type="time" value={time} min="11:00" max="21:30" onChange={function (e) { setTime(e.target.value); }} required />
+          <small style={{ color: "#77716a", fontSize: "12px", marginTop: "4px" }}>Open daily from 11:00 AM to 10:00 PM.</small>
         </div>
 
         <div className="reservation-field">
           <label htmlFor="res-guests">Number of Guests</label>
-
-          <input
-            id="res-guests"
-            type="number"
-            placeholder="1–15"
-            min="1"
-            max="15"
-            value={guests}
-            onChange={function (e) {
-              setGuests(e.target.value);
-            }}
-            required
-          />
+          <input id="res-guests" type="number" placeholder="1–15" min="1" max="15" value={guests} onChange={function (e) { setGuests(e.target.value); }} required />
         </div>
-        {error && (
-          <p className="reservation-error">
-            {error}
-          </p>
-        )}
 
-        {message && (
-          <p className="reservation-success">
-            {message}
-          </p>
-        )}
+        {error && <p className="reservation-error">{error}</p>}
+        {message && <p className="reservation-success">{message}</p>}
 
-        <button
-          type="submit"
-          className="primary-btn"
-          disabled={loading}
-        >
-          {loading
-            ? "Saving Reservation..."
-            : "Confirm Reservation"}
+        <button type="submit" className="primary-btn" disabled={loading}>
+          {loading ? "Saving Reservation..." : "Confirm Reservation"}
         </button>
       </form>
     </main>
