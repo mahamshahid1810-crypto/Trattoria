@@ -17,6 +17,70 @@ import AdminLogin from "./AdminLogin";
 import ManageReviews from "./ManageReviews";
 import AdminDashboard from "./AdminDashboard";
 
+/* OPEN / CLOSED STATUS BADGE */
+function OpenStatus({ openHour = 11, closeHour = 22 }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const currentHour = now.getHours();
+  const isOpen = currentHour >= openHour && currentHour < closeHour;
+
+  function formatHour(h) {
+    if (h === 0 || h === 24) return "12 AM";
+    if (h === 12) return "12 PM";
+    if (h > 12) return (h - 12) + " PM";
+    return h + " AM";
+  }
+
+  return (
+    <div className={`open-badge ${isOpen ? "open" : "closed"}`}>
+      <span className="open-dot"></span>
+      {isOpen
+        ? `Open Now · Closes at ${formatHour(closeHour)}`
+        : `Closed · Opens at ${formatHour(openHour)}`}
+    </div>
+  );
+}
+
+/* CLOSED BANNER */
+function ClosedBanner({ openHour = 11, closeHour = 22 }) {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  const currentHour = now.getHours();
+  const isOpen = currentHour >= openHour && currentHour < closeHour;
+
+  if (isOpen) return null;
+
+  function formatHour(h) {
+    if (h === 0 || h === 24) return "12 AM";
+    if (h === 12) return "12 PM";
+    if (h > 12) return (h - 12) + " PM";
+    return h + " AM";
+  }
+
+  return (
+    <div className="closed-banner">
+      <span className="closed-banner-icon">🔴</span>
+      <div>
+        <strong>We're currently closed</strong>
+        <p>
+          You can browse the menu, but orders are only accepted between{" "}
+          {formatHour(openHour)} and {formatHour(closeHour)}.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* =========================================================
    NAVBAR
 ========================================================= */
@@ -116,10 +180,39 @@ function Navbar({ cartCount }) {
 ========================================================= */
 
 function Home() {
+    const heroImages = [
+    "https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=1600&q=85",
+    "https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=1600&q=85",
+    "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1600&q=85",
+    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1600&q=85",
+  ];
+
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
   return (
     <main>
       <section className="hero">
+        <div className="hero-slideshow">
+          {heroImages.map((img, i) => (
+            <div
+              key={i}
+              className={`hero-slide ${
+                i === currentSlide ? "active" : ""
+              }`}
+              style={{ backgroundImage: `url(${img})` }}
+            />
+          ))}
+          <div className="hero-overlay"></div>
+        </div>
+
         <div className="hero-content">
+          <OpenStatus openHour={11} closeHour={22} />
           <p>
             AUTHENTIC ITALIAN CUISINE
           </p>
@@ -372,6 +465,7 @@ function Menu({ cart, setCart }) {
 
   return (
     <main className="page menu-page">
+      <ClosedBanner openHour={11} closeHour={22} />
       <p className="small-title">
         OUR MENU
       </p>
@@ -417,23 +511,22 @@ function Menu({ cart, setCart }) {
         })}
       </div>
 
-      {loading && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "60px 20px",
-          }}
-        >
-          <h2>
-            Loading menu...
-          </h2>
-
-          <p>
-            Please wait while we load our dishes.
-          </p>
+        {loading && (
+        <div className="menu-grid">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div className="dish-card skeleton-card" key={i}>
+              <div className="skeleton-image"></div>
+              <div className="dish-info">
+                <div className="skeleton-line skeleton-title"></div>
+                <div className="skeleton-line skeleton-rating"></div>
+                <div className="skeleton-line skeleton-text"></div>
+                <div className="skeleton-line skeleton-text short"></div>
+                <div className="skeleton-button"></div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
-
       {!loading && error && (
         <div
           style={{
@@ -498,7 +591,7 @@ function Menu({ cart, setCart }) {
                       </h2>
 
                       <strong>
-                        ${dish.price}
+                      Rs {dish.price}
                       </strong>
                     </div>
 
@@ -809,6 +902,17 @@ function Checkout({ cart, setCart }) {
 
     setError("");
     setErrorField("");
+        const currentHour = new Date().getHours();
+    const openHour = 11;
+    const closeHour = 22;
+
+    if (currentHour < openHour || currentHour >= closeHour) {
+      setError(
+        "We are currently closed. Orders can only be placed between 11 AM and 10 PM."
+      );
+      setErrorField("closed");
+      return;
+    }
 
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
@@ -1037,7 +1141,9 @@ function Checkout({ cart, setCart }) {
 
   return (
     <main className="page checkout-page">
+         <ClosedBanner openHour={11} closeHour={22} />
       <p className="small-title">YOUR ORDER</p>
+         
 
       <h1>Confirm Your Order</h1>
 
@@ -1064,7 +1170,7 @@ function Checkout({ cart, setCart }) {
                 <div className="order-item-info">
                   <h3>{item.name}</h3>
 
-                  <p>${item.price} each</p>
+                  <p>Rs {item.price} each</p>
 
                   <div className="quantity-controls">
                     <button
@@ -1091,8 +1197,8 @@ function Checkout({ cart, setCart }) {
                 </div>
 
                 <div className="order-item-right">
-                  <strong>
-                    $
+             <strong>
+                    Rs{" "}
                     {(
                       Number(item.price) *
                       Number(item.quantity)
@@ -1129,19 +1235,19 @@ function Checkout({ cart, setCart }) {
 
           <div className="summary-row">
             <span>Subtotal</span>
-            <strong>${subtotal.toFixed(2)}</strong>
+            <strong>Rs {subtotal.toFixed(2)}</strong>
           </div>
 
           <div className="summary-row">
             <span>Delivery Fee</span>
-            <strong>${deliveryFee.toFixed(2)}</strong>
+            <strong>Rs {deliveryFee.toFixed(2)}</strong>
           </div>
 
           <div className="summary-divider"></div>
 
           <div className="summary-total">
             <span>Total Payment</span>
-            <strong>${total.toFixed(2)}</strong>
+            <strong>Rs {total.toFixed(2)}</strong>
           </div>
 
           <p className="delivery-note">
@@ -1305,7 +1411,7 @@ function Checkout({ cart, setCart }) {
                 : "Confirm Your Order"}
             </span>
 
-            <strong>${total.toFixed(2)}</strong>
+            <strong>Rs {total.toFixed(2)}</strong>
           </button>
         </form>
       </section>
@@ -2050,8 +2156,8 @@ function OrderPlaced() {
                   TOTAL
                 </span>
 
-                <strong>
-                  $
+           <strong>
+                  Rs{" "}
                   {Number(
                     orderTotal
                   ).toFixed(2)}
