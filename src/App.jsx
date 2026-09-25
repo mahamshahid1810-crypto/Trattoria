@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import { useEffect, useState } from "react";
+import "./App.css";
 
 import ManageMenu from "./ManageMenu";
 import ManageReservations from "./ManageReservations";
