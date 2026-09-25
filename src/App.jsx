@@ -199,7 +199,7 @@ function Home() {
   }, [currentSlide]);
   return (
     <main>
-          <section
+       <section
         className="hero"
         style={{
           position: "relative",
@@ -292,7 +292,7 @@ function Home() {
               Reserve a Table
             </Link>
           </div>
-           </div>
+               </div>
 
         <style>{`
           @keyframes heroFadeIn {
@@ -301,6 +301,7 @@ function Home() {
           }
         `}</style>
       </section>
+
       <section className="home-intro">
         <p>
           WELCOME TO TRATTORIA
@@ -2597,10 +2598,66 @@ function Reservation() {
   const [message, setMessage] =
     useState("");
 
-  const [error, setError] =
+   const [error, setError] =
     useState("");
 
+  const [alreadyReserved, setAlreadyReserved] =
+    useState(false);
+
+  const [checkingReservation, setCheckingReservation] =
+    useState(true);
+
+  /* CHECK IF THIS DEVICE ALREADY HAS A RESERVATION */
+  useEffect(() => {
+    async function checkExisting() {
+      const savedId = localStorage.getItem(
+        "trattoria_my_reservation_id"
+      );
+
+      if (!savedId) {
+        setCheckingReservation(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "https://trattoria-backend-production.up.railway.app/api/reservations"
+        );
+
+        if (!response.ok) {
+          setCheckingReservation(false);
+          return;
+        }
+
+        const list = await response.json();
+
+        const stillExists = list.some(function (r) {
+          return r._id === savedId;
+        });
+
+        if (stillExists) {
+          setAlreadyReserved(true);
+        } else {
+          // Admin deleted it → allow new reservation
+          localStorage.removeItem(
+            "trattoria_my_reservation_id"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Reservation check failed:",
+          error
+        );
+      } finally {
+        setCheckingReservation(false);
+      }
+    }
+
+    checkExisting();
+  }, []);
+
   async function handleReservation(e) {
+
     e.preventDefault();
 
     setMessage("");
@@ -2856,6 +2913,15 @@ function Reservation() {
         );
       }
 
+        if (data._id) {
+        localStorage.setItem(
+          "trattoria_my_reservation_id",
+          data._id.toString()
+        );
+      }
+
+      setAlreadyReserved(true);
+
       setMessage(
         "Reservation confirmed! Thank you " +
         cleanName +
@@ -2880,6 +2946,81 @@ function Reservation() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingReservation) {
+    return (
+      <main className="page reservation-page">
+        <p className="small-title">
+          BOOK YOUR TABLE
+        </p>
+
+        <h1>Make a Reservation</h1>
+
+        <p
+          style={{
+            marginTop: "30px",
+            color: "#77716a",
+          }}
+        >
+          Checking your reservations…
+        </p>
+      </main>
+    );
+  }
+
+  if (alreadyReserved) {
+    return (
+      <main className="page reservation-page">
+        <p className="small-title">
+          BOOK YOUR TABLE
+        </p>
+
+        <h1>Make a Reservation</h1>
+
+        <div
+          style={{
+            marginTop: "40px",
+            padding: "30px",
+            background: "#fff6ee",
+            border: "1px solid #e9e1d8",
+            borderRadius: "20px",
+            maxWidth: "560px",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily:
+                '"Playfair Display", serif',
+              fontSize: "26px",
+              marginBottom: "12px",
+            }}
+          >
+            You already have a reservation
+          </h2>
+
+          <p
+            style={{
+              color: "#77716a",
+              marginBottom: "22px",
+            }}
+          >
+            Please contact Trattoria or wait until
+            your current reservation is cleared
+            before booking another table.
+          </p>
+
+          <Link
+            to="/"
+            className="primary-btn"
+          >
+            Back to Home
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (
