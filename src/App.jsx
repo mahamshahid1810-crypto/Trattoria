@@ -2848,25 +2848,28 @@ function Reservation() {
       <h1>Make a Reservation</h1>
 
       <form className="reservation-form" onSubmit={handleReservation}>
-            <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "6px",
-            width: "100%",
-          }}
-        >
-          <label
-            htmlFor="res-time"
-            style={{
-              fontSize: "13px",
-              fontWeight: 700,
-              color: "#3f3934",
-              marginBottom: "2px",
-            }}
-          >
-            Select Time (11:00 AM – 9:30 PM)
-          </label>
+        <div className="reservation-field">
+          <label htmlFor="res-name">Your Name</label>
+          <input id="res-name" type="text" placeholder="Enter your full name" value={name} onChange={function (e) { setName(e.target.value); }} required />
+        </div>
+
+        <div className="reservation-field">
+          <label htmlFor="res-email">Email Address</label>
+          <input id="res-email" type="email" placeholder="Enter your email" value={email} onChange={function (e) { setEmail(e.target.value); }} required />
+        </div>
+
+        <div className="reservation-field">
+          <label htmlFor="res-phone">Phone Number</label>
+          <input id="res-phone" type="tel" placeholder="03001234567" value={phone} onChange={function (e) { setPhone(e.target.value); }} required />
+        </div>
+
+        <div className="reservation-field">
+          <label htmlFor="res-date">Select Date</label>
+          <input id="res-date" type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={function (e) { setDate(e.target.value); }} required />
+        </div>
+
+              <div className="reservation-field">
+          <label htmlFor="res-time">Select Time</label>
           <select
             id="res-time"
             value={time}
@@ -2874,22 +2877,6 @@ function Reservation() {
               setTime(e.target.value);
             }}
             required
-            style={{
-              width: "100%",
-              padding: "14px 40px 14px 16px",
-              border: "1px solid #e9e1d8",
-              borderRadius: "12px",
-              outline: "none",
-              background:
-                "#fcfaf7 url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b4f35' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\") no-repeat right 14px center",
-              backgroundSize: "16px",
-              fontFamily: "inherit",
-              fontSize: "15px",
-              color: "#171513",
-              boxSizing: "border-box",
-              appearance: "none",
-              WebkitAppearance: "none",
-            }}
           >
             <option value="">Choose a time</option>
             <option value="11:00">11:00 AM</option>
@@ -2912,16 +2899,8 @@ function Reservation() {
             <option value="19:30">7:30 PM</option>
             <option value="20:00">8:00 PM</option>
             <option value="20:30">8:30 PM</option>
-            <option value="21:00">9:00 PM</option>
-            <option value="21:30">9:30 PM</option>
           </select>
-          <small
-            style={{
-              color: "#77716a",
-              fontSize: "12px",
-              marginTop: "4px",
-            }}
-          >
+          <small style={{ color: "#77716a", fontSize: "12px", marginTop: "4px" }}>
             Open daily from 11:00 AM to 10:00 PM.
           </small>
         </div>
