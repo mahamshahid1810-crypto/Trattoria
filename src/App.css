@@ -2190,3 +2190,54 @@ img {
 .reserve-btn:hover {
   background: #653625 !important;
 }
+/* FORCE correct hero stacking */
+.hero {
+  position: relative !important;
+}
+
+.hero-slideshow {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+}
+
+.hero-slide {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+}
+
+.hero-overlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 12, 10, 0.82),
+    rgba(15, 12, 10, 0.48),
+    rgba(15, 12, 10, 0.15)
+  ) !important;
+}
+
+.hero-content {
+  position: relative !important;
+  z-index: 5 !important;
+  max-width: 700px !important;
+  color: white !important;
+}
+
+.hero-content h1 {
+  color: white !important;
+}
+
+.hero-content h1 span {
+  color: #e6bd86 !important;
+}
+
+.hero-content > p {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.hero-content > p:first-child {
+  color: #e8c99d !important;
+}
