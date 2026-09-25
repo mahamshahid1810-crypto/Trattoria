@@ -2868,10 +2868,42 @@ function Reservation() {
           <input id="res-date" type="date" value={date} min={new Date().toISOString().split("T")[0]} onChange={function (e) { setDate(e.target.value); }} required />
         </div>
 
-        <div className="reservation-field">
-          <label htmlFor="res-time">Select Time (11:00 AM – 9:30 PM)</label>
-          <input id="res-time" type="time" value={time} min="11:00" max="21:30" onChange={function (e) { setTime(e.target.value); }} required />
-          <small style={{ color: "#77716a", fontSize: "12px", marginTop: "4px" }}>Open daily from 11:00 AM to 10:00 PM.</small>
+              <div className="reservation-field">
+          <label htmlFor="res-time">Select Time</label>
+          <select
+            id="res-time"
+            value={time}
+            onChange={function (e) {
+              setTime(e.target.value);
+            }}
+            required
+          >
+            <option value="">Choose a time</option>
+            <option value="11:00">11:00 AM</option>
+            <option value="11:30">11:30 AM</option>
+            <option value="12:00">12:00 PM</option>
+            <option value="12:30">12:30 PM</option>
+            <option value="13:00">1:00 PM</option>
+            <option value="13:30">1:30 PM</option>
+            <option value="14:00">2:00 PM</option>
+            <option value="14:30">2:30 PM</option>
+            <option value="15:00">3:00 PM</option>
+            <option value="15:30">3:30 PM</option>
+            <option value="16:00">4:00 PM</option>
+            <option value="16:30">4:30 PM</option>
+            <option value="17:00">5:00 PM</option>
+            <option value="17:30">5:30 PM</option>
+            <option value="18:00">6:00 PM</option>
+            <option value="18:30">6:30 PM</option>
+            <option value="19:00">7:00 PM</option>
+            <option value="19:30">7:30 PM</option>
+            <option value="20:00">8:00 PM</option>
+            <option value="20:30">8:30 PM</option>
+  
+          </select>
+          <small style={{ color: "#77716a", fontSize: "12px", marginTop: "4px" }}>
+            Open daily from 11:00 AM to 10:00 PM.
+          </small>
         </div>
 
         <div className="reservation-field">
