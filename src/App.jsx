@@ -2971,31 +2971,64 @@ function Reservation() {
 
   if (alreadyReserved) {
     return (
-      <main className="page reservation-page">
-        <p className="small-title">
-          BOOK YOUR TABLE
-        </p>
-
-        <h1>Make a Reservation</h1>
-
+      <main
+        style={{
+          minHeight: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "80px 20px",
+          background: "#faf7f2",
+        }}
+      >
         <div
           style={{
-            marginTop: "40px",
-            padding: "30px",
-            background: "#fff6ee",
-            border: "1px solid #e9e1d8",
-            borderRadius: "20px",
             maxWidth: "560px",
-            marginLeft: "auto",
-            marginRight: "auto",
+            width: "100%",
+            background: "#ffffff",
+            border: "1px solid #e9e1d8",
+            borderRadius: "24px",
+            padding: "50px 40px",
+            textAlign: "center",
+            boxShadow: "0 20px 50px rgba(45, 30, 20, 0.08)",
           }}
         >
+          <div
+            style={{
+              width: "70px",
+              height: "70px",
+              borderRadius: "50%",
+              background: "#f3ede6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 22px",
+              fontSize: "32px",
+            }}
+          >
+            🍽️
+          </div>
+
+          <p
+            style={{
+              color: "#8b4f35",
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "4px",
+              marginBottom: "12px",
+              textTransform: "uppercase",
+            }}
+          >
+            Reservation Locked
+          </p>
+
           <h2
             style={{
-              fontFamily:
-                '"Playfair Display", serif',
-              fontSize: "26px",
-              marginBottom: "12px",
+              fontFamily: '"Playfair Display", serif',
+              fontSize: "32px",
+              lineHeight: 1.2,
+              color: "#171513",
+              marginBottom: "14px",
             }}
           >
             You already have a reservation
@@ -3004,7 +3037,9 @@ function Reservation() {
           <p
             style={{
               color: "#77716a",
-              marginBottom: "22px",
+              fontSize: "15px",
+              lineHeight: 1.7,
+              marginBottom: "30px",
             }}
           >
             Please contact Trattoria or wait until
@@ -3014,7 +3049,16 @@ function Reservation() {
 
           <Link
             to="/"
-            className="primary-btn"
+            style={{
+              display: "inline-block",
+              background: "#171513",
+              color: "#ffffff",
+              padding: "13px 28px",
+              borderRadius: "50px",
+              fontWeight: 700,
+              fontSize: "14px",
+              textDecoration: "none",
+            }}
           >
             Back to Home
           </Link>
