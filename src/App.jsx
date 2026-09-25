@@ -188,24 +188,76 @@ function Home() {
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [prevSlide, setPrevSlide] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
+      setPrevSlide(currentSlide);
       setCurrentSlide((prev) => (prev + 1) % heroImages.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [currentSlide]);
   return (
     <main>
-         <section
+          <section
         className="hero"
         style={{
-          backgroundImage: `linear-gradient(90deg, rgba(15,12,10,0.82), rgba(15,12,10,0.48), rgba(15,12,10,0.15)), url(${heroImages[currentSlide]})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          position: "relative",
+          overflow: "hidden",
+          minHeight: "82vh",
+          display: "flex",
+          alignItems: "center",
+          padding: "120px 7% 80px",
+          background: "none",
         }}
       >
-        <div className="hero-content">
+        {/* Base layer - previous image */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${heroImages[prevSlide]})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            zIndex: 0,
+          }}
+        />
+
+        {/* Top layer - current image fades in */}
+        <div
+          key={currentSlide}
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `url(${heroImages[currentSlide]})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            zIndex: 1,
+            animation: "heroFadeIn 1.5s ease-in-out",
+          }}
+        />
+
+        {/* Dark gradient overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 2,
+            background:
+              "linear-gradient(90deg, rgba(15,12,10,0.82), rgba(15,12,10,0.48), rgba(15,12,10,0.15))",
+          }}
+        />
+
+        {/* Text */}
+        <div
+          className="hero-content"
+          style={{
+            position: "relative",
+            zIndex: 3,
+            maxWidth: "700px",
+            color: "white",
+          }}
+        >
           <OpenStatus openHour={11} closeHour={22} />
           <p>
             AUTHENTIC ITALIAN CUISINE
@@ -240,9 +292,15 @@ function Home() {
               Reserve a Table
             </Link>
           </div>
-        </div>
-      </section>
+           </div>
 
+        <style>{`
+          @keyframes heroFadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+          }
+        `}</style>
+      </section>
       <section className="home-intro">
         <p>
           WELCOME TO TRATTORIA
