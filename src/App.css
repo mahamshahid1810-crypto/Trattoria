@@ -2178,3 +2178,15 @@ img {
   .hero-buttons { flex-direction: column; align-items: stretch; }
   .hero-buttons a { width: 100%; }
 }
+.hero-content {
+  position: relative !important;
+  z-index: 5 !important;
+}
+
+.hero-overlay {
+  z-index: 2 !important;
+}
+
+.hero-slideshow {
+  z-index: 1 !important;
+}
