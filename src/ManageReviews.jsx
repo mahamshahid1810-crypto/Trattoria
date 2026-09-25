@@ -227,12 +227,38 @@ function ManageReviews() {
 
         {/* REVIEWS */}
 
-        {reviews.length === 0 ? (
+          {reviews.length === 0 ? (
 
-          <div className="manage-reviews-empty">
-            <h2>No Reviews Yet</h2>
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e9e1d8",
+              borderRadius: "24px",
+              padding: "60px 30px",
+              textAlign: "center",
+              maxWidth: "560px",
+              margin: "40px auto 0",
+              boxShadow: "0 20px 50px rgba(45, 30, 20, 0.08)",
+            }}
+          >
+            <h2
+              style={{
+                fontFamily: '"Playfair Display", serif',
+                fontSize: "32px",
+                color: "#171513",
+                marginBottom: "10px",
+              }}
+            >
+              No Reviews Yet
+            </h2>
 
-            <p>
+            <p
+              style={{
+                color: "#77716a",
+                fontSize: "15px",
+                lineHeight: 1.6,
+              }}
+            >
               Customer reviews will appear here.
             </p>
           </div>
