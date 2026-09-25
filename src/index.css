@@ -4896,3 +4896,87 @@ main.manage-orders-page {
   color: #3f3934;
   margin-bottom: 2px;
 }
+/* =========================================================
+   RESERVATION — FINAL FIX (override everything)
+========================================================= */
+
+/* Labels: light cream so they show on dark */
+.reservation-form label,
+.reservation-field label {
+  color: #f0dfd0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  margin-bottom: 6px !important;
+  letter-spacing: 0.3px !important;
+  display: block !important;
+}
+
+/* Small helper text under fields */
+.reservation-form small,
+.reservation-field small {
+  color: #b9a894 !important;
+  font-size: 12px !important;
+  margin-top: 6px !important;
+}
+
+/* All inputs + select: dark box, light text (like original) */
+.reservation-form input,
+.reservation-form select {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 10px !important;
+  background: #302b27 !important;
+  color: #f4eee6 !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+/* Placeholder text */
+.reservation-form input::placeholder {
+  color: #8e8781 !important;
+}
+
+/* Date/time icons inside inputs */
+.reservation-form input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) !important;
+  cursor: pointer !important;
+}
+
+/* Focus state */
+.reservation-form input:focus,
+.reservation-form select:focus {
+  border-color: #c8864d !important;
+  box-shadow: 0 0 0 3px rgba(200, 134, 77, 0.12) !important;
+}
+
+/* Time dropdown — dark bg, gold chevron */
+.reservation-form select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 42px !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2a66d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px !important;
+}
+
+.reservation-form select option {
+  background: #302b27 !important;
+  color: #f4eee6 !important;
+}
+
+/* Field wrapper */
+.reservation-field {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+/* Confirm button row */
+.reservation-form button,
+.reservation-form .primary-btn {
+  grid-column: 1 / -1 !important;
+}
